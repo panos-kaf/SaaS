@@ -1,0 +1,19 @@
+{
+  "name": "grade_statistics_service",
+  "version": "1.0.0",
+  "description": "Microservice for retrieving grade statistics for courses",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "pg": "^8.7.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}

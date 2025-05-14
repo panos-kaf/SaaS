@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  grade_statistics_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/grade_statistics_db
+
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: grade_statistics_db
+    ports:
+      - "5432:5432"
