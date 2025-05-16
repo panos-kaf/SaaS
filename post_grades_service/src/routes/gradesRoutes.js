@@ -30,13 +30,16 @@ const upload = multer({
     }
 });
 
-// POST /api/post-grades
-router.post('/post-grades', upload.single('gradesFile'), gradesController.postGrades);
+// POST /api/grade-submissions - Uploads a grades file and creates a submission record
+router.post('/grade-submissions', upload.single('gradesFile'), gradesController.uploadAndProcessGrades);
 
-// PUT /api/edit-grades/:grades_ID (Changed from UPDATE to PUT for RESTful convention)
-router.put('/edit-grades/:grades_ID', upload.single('gradesFile'), gradesController.editGrades);
+// PUT /api/grade-submissions/:submission_id/file - Updates the file for a specific grade submission
+router.put('/grade-submissions/:submission_id/file', upload.single('gradesFile'), gradesController.updateGradeSubmissionFile);
 
-// DELETE /api/delete-grades/:grades_ID
-router.delete('/delete-grades/:grades_ID', gradesController.deleteGrades);
+// DELETE /api/grade-submissions/:submission_id - Deletes a grade submission and its associated grades
+router.delete('/grade-submissions/:submission_id', gradesController.deleteGradeSubmission);
+
+// POST /api/grade-submissions/:submission_id/finalize - Finalizes a grade submission
+router.post('/grade-submissions/:submission_id/finalize', gradesController.finalizeGradeSubmission);
 
 module.exports = router;

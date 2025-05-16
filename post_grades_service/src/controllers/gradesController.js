@@ -1,6 +1,7 @@
 const db = require('../database/db');
-const fs = require('fs'); // File system module for deleting files if necessary
-const path = require('path'); // Path module for constructing file paths
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser'); // Added for CSV parsing
 
 // Ensure the uploads directory exists
 const uploadsDir = path.join(__dirname, '../../uploads'); // Adjust path as necessary
@@ -8,138 +9,311 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// 1. Post Grades
-exports.postGrades = async (req, res) => {
-    const { course_name, exam_period, date, professor } = req.body;
-    const file = req.file;
-
-    if (!course_name || !exam_period || !date || !professor || !file) {
-        return res.status(400).json({ error: 'Missing required fields: course_name, exam_period, date, professor, and gradesFile are required.' });
+// Helper function to delete a file
+const deleteFile = (filePath) => {
+    if (filePath) {
+        fs.unlink(filePath, err => {
+            if (err) console.error(`Error deleting file ${filePath}:`, err);
+        });
     }
+};
 
-    // Basic validation for date format (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
-        if (file && file.path) {
-            // Clean up uploaded file if validation fails
-            fs.unlink(file.path, err => {
-                if (err) console.error("Error deleting uploaded file after validation fail:", err);
+// Helper function to parse CSV and insert grades into the database
+const processGradesFile = (filePath, submissionId) => {
+    return new Promise((resolve, reject) => {
+        const gradesToInsert = [];
+        fs.createReadStream(filePath)
+            .pipe(csv())
+            .on('data', (row) => {
+                // Basic validation: ensure all required fields from the schema are present in the CSV row
+                // These names should match your CSV headers
+                const { 
+                    course_id, prof_id, student_academic_number, student_name, 
+                    student_email, semester, course_name, course_code, 
+                    grade_scale, grade 
+                } = row;
+
+                if (!course_id || !prof_id || !student_academic_number || !student_name || 
+                    !semester || !course_name || !course_code || !grade_scale || !grade) {
+                    // Skip row or collect error, here we'll skip and log
+                    console.warn('Skipping row due to missing required fields:', row);
+                    return;
+                }
+
+                gradesToInsert.push({
+                    submission_id: submissionId,
+                    course_id,
+                    prof_id,
+                    student_academic_number,
+                    student_name,
+                    student_email: student_email || null, // Handle optional email
+                    semester,
+                    course_name,
+                    course_code,
+                    grade_scale,
+                    grade
+                });
+            })
+            .on('end', async () => {
+                if (gradesToInsert.length === 0) {
+                    // If the file was empty or all rows were invalid
+                    console.log(`No valid grade data found in file for submission ID: ${submissionId}`);
+                    resolve(); // Resolve successfully as the file itself was processed
+                    return;
+                }
+                try {
+                    // Insert all grades in a single batch if possible, or loop if necessary
+                    // For simplicity, looping here. For very large files, batching is better.
+                    for (const gradeEntry of gradesToInsert) {
+                        await db.query(
+                            'INSERT INTO grades (submission_id, course_id, prof_id, student_academic_number, student_name, student_email, semester, course_name, course_code, grade_scale, grade) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+                            [
+                                gradeEntry.submission_id, gradeEntry.course_id, gradeEntry.prof_id, 
+                                gradeEntry.student_academic_number, gradeEntry.student_name, gradeEntry.student_email,
+                                gradeEntry.semester, gradeEntry.course_name, gradeEntry.course_code, 
+                                gradeEntry.grade_scale, gradeEntry.grade
+                            ]
+                        );
+                    }
+                    resolve();
+                } catch (dbError) {
+                    console.error('Error inserting grades during CSV processing:', dbError);
+                    reject(dbError); // This will trigger rollback in the calling function
+                }
+            })
+            .on('error', (parseError) => {
+                console.error('Error parsing CSV file:', parseError);
+                reject(parseError); // This will trigger rollback
             });
-        }
-        return res.status(400).json({ error: 'Invalid date format. Please use YYYY-MM-DD.' });
+    });
+};
+
+
+// 1. Upload Grades File and Create Submission
+// This replaces the old postGrades. It now creates a submission record
+// and then expects individual grades to be parsed from the file and inserted.
+exports.uploadAndProcessGrades = async (req, res) => {
+    const file = req.file;
+    // Assuming owner_user_service_id comes from authenticated user session/token
+    const owner_user_service_id = req.user?.user_service_id; 
+
+    if (!file) {
+        return res.status(400).json({ error: 'Grades file is required.' });
+    }
+    if (!owner_user_service_id) {
+        deleteFile(file.path);
+        return res.status(401).json({ error: 'User not authenticated or user_service_id missing.' });
     }
 
     const filePath = file.path;
+    let submissionId;
 
     try {
-        const result = await db.query(
-            'INSERT INTO grades (course_name, exam_period, exam_date, professor, file_path) VALUES ($1, $2, $3, $4, $5) RETURNING grades_id',
-            [course_name, exam_period, date, professor, filePath]
+        // Start a transaction
+        await db.query('BEGIN');
+
+        const submissionResult = await db.query(
+            'INSERT INTO grade_submissions (owner_user_service_id, file_path) VALUES ($1, $2) RETURNING submission_id',
+            [owner_user_service_id, filePath]
         );
-        res.status(201).json({ message: 'Grades posted successfully', grades_id: result.rows[0].grades_id });
+        submissionId = submissionResult.rows[0].submission_id;
+
+        // Process the CSV file and insert grades
+        await processGradesFile(filePath, submissionId);
+
+        await db.query('COMMIT');
+        res.status(201).json({ 
+            message: 'Grade submission and grades processed successfully.', 
+            submission_id: submissionId
+        });
     } catch (error) {
-        console.error('Error posting grades:', error);
-        // Clean up uploaded file if database insertion fails
-        if (file && file.path) {
-            fs.unlink(file.path, err => {
-                if (err) console.error("Error deleting uploaded file after DB error:", err);
-            });
-        }
-        res.status(500).json({ error: 'Failed to post grades.', details: error.message });
+        await db.query('ROLLBACK');
+        console.error('Error in uploadAndProcessGrades:', error);
+        deleteFile(filePath); // Clean up uploaded file if submission fails
+        res.status(500).json({ error: 'Failed to process grade submission.', details: error.message });
     }
 };
 
-// 2. Edit Grades
-exports.editGrades = async (req, res) => {
-    const { grades_ID } = req.params;
+// 2. Update Grade Submission File (replaces old editGrades)
+// Allows replacing the file for a non-finalized submission.
+exports.updateGradeSubmissionFile = async (req, res) => {
+    const { submission_id } = req.params;
     const file = req.file;
+    const user_service_id = req.user?.user_service_id;
 
     if (!file) {
-        return res.status(400).json({ error: 'Missing gradesFile for update.' });
+        return res.status(400).json({ error: 'New grades file is required for update.' });
+    }
+    if (!user_service_id) {
+        deleteFile(file.path);
+        return res.status(401).json({ error: 'User not authenticated.' });
     }
 
     const newFilePath = file.path;
+    let oldFilePath;
 
     try {
-        // First, retrieve the old file path to delete it after update
-        const oldGradeEntry = await db.query('SELECT file_path FROM grades WHERE grades_id = $1', [grades_ID]);
-        if (oldGradeEntry.rows.length === 0) {
-            // Clean up the newly uploaded file if the record doesn't exist
-            fs.unlink(newFilePath, err => {
-                if (err) console.error("Error deleting new file for non-existent record:", err);
-            });
-            return res.status(404).json({ error: 'Grade entry not found.' });
-        }
-        const oldFilePath = oldGradeEntry.rows[0].file_path;
+        await db.query('BEGIN');
 
-        // Update the database record with the new file path
-        const result = await db.query(
-            'UPDATE grades SET file_path = $1, updated_at = CURRENT_TIMESTAMP WHERE grades_id = $2 RETURNING grades_id',
-            [newFilePath, grades_ID]
+        const submissionCheck = await db.query(
+            'SELECT file_path, owner_user_service_id, finalized FROM grade_submissions WHERE submission_id = $1',
+            [submission_id]
         );
 
-        if (result.rowCount === 0) {
-            // Should not happen if previous check passed, but as a safeguard
-            fs.unlink(newFilePath, err => {
-                if (err) console.error("Error deleting new file if update failed unexpectedly:", err);
-            });
-            return res.status(404).json({ error: 'Grade entry not found for update.' });
+        if (submissionCheck.rows.length === 0) {
+            await db.query('ROLLBACK');
+            deleteFile(newFilePath);
+            return res.status(404).json({ error: 'Grade submission not found.' });
         }
 
-        // If update was successful, delete the old file
+        const submission = submissionCheck.rows[0];
+        oldFilePath = submission.file_path;
+
+        if (submission.owner_user_service_id !== user_service_id) {
+            await db.query('ROLLBACK');
+            deleteFile(newFilePath);
+            return res.status(403).json({ error: 'Forbidden: You are not the owner of this submission.' });
+        }
+
+        if (submission.finalized) {
+            await db.query('ROLLBACK');
+            deleteFile(newFilePath);
+            return res.status(403).json({ error: 'Forbidden: This grade submission is finalized and cannot be edited.' });
+        }
+
+        // Update the file path in the submission record
+        await db.query(
+            'UPDATE grade_submissions SET file_path = $1, updated_at = CURRENT_TIMESTAMP WHERE submission_id = $2',
+            [newFilePath, submission_id]
+        );
+
+        // Delete existing grades associated with this submission_id
+        await db.query('DELETE FROM grades WHERE submission_id = $1', [submission_id]);
+
+        // Process the new CSV file and insert grades
+        await processGradesFile(newFilePath, submission_id);
+
+        await db.query('COMMIT');
+        
+        // Delete the old file after successful update and commit
         if (oldFilePath && oldFilePath !== newFilePath) {
-            fs.unlink(oldFilePath, (err) => {
-                if (err) {
-                    console.error('Failed to delete old grades file:', err);
-                    // Non-critical error, so don't send error response to client for this
-                }
-            });
+            deleteFile(oldFilePath);
         }
 
-        res.status(200).json({ message: 'Grades updated successfully', grades_id: grades_ID });
-    } catch (error) {
-        console.error('Error editing grades:', error);
-        // Clean up the newly uploaded file if there's an error during the process
-        fs.unlink(newFilePath, err => {
-            if (err) console.error("Error deleting new file after DB error during edit:", err);
+        res.status(200).json({ 
+            message: 'Grade submission file updated and grades re-processed successfully.', 
+            submission_id: submission_id
         });
-        res.status(500).json({ error: 'Failed to edit grades.', details: error.message });
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('Error in updateGradeSubmissionFile:', error);
+        deleteFile(newFilePath); // Clean up newly uploaded file on error
+        // Don't delete oldFilePath here as rollback might have kept it
+        res.status(500).json({ error: 'Failed to update grade submission file.', details: error.message });
     }
 };
 
-// 3. Delete Grades
-exports.deleteGrades = async (req, res) => {
-    const { grades_ID } = req.params;
+// 3. Delete Grade Submission (replaces old deleteGrades)
+exports.deleteGradeSubmission = async (req, res) => {
+    const { submission_id } = req.params;
+    const user_service_id = req.user?.user_service_id;
+    const user_role = req.user?.role; // Assuming role is available for admin override
+
+    if (!user_service_id) {
+        return res.status(401).json({ error: 'User not authenticated.' });
+    }
 
     try {
-        // First, retrieve the file path to delete the file from storage
-        const gradeEntry = await db.query('SELECT file_path FROM grades WHERE grades_id = $1', [grades_ID]);
-        if (gradeEntry.rows.length === 0) {
-            return res.status(404).json({ error: 'Grade entry not found.' });
+        await db.query('BEGIN');
+
+        const submissionCheck = await db.query(
+            'SELECT file_path, owner_user_service_id, finalized FROM grade_submissions WHERE submission_id = $1',
+            [submission_id]
+        );
+
+        if (submissionCheck.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ error: 'Grade submission not found.' });
         }
-        const filePathToDelete = gradeEntry.rows[0].file_path;
 
-        // Delete the database record
-        const result = await db.query('DELETE FROM grades WHERE grades_id = $1 RETURNING grades_id', [grades_ID]);
+        const submission = submissionCheck.rows[0];
+        const filePathToDelete = submission.file_path;
 
-        if (result.rowCount === 0) {
+        // Ownership check or admin override
+        if (submission.owner_user_service_id !== user_service_id && user_role !== 'admin') { // Example admin role
+            await db.query('ROLLBACK');
+            return res.status(403).json({ error: 'Forbidden: You are not the owner or an admin.' });
+        }
+
+        // Check if finalized (policy might differ, e.g., admin can delete finalized)
+        if (submission.finalized && user_role !== 'admin') {
+            await db.query('ROLLBACK');
+            return res.status(403).json({ error: 'Forbidden: This submission is finalized. Contact an admin for deletion.' });
+        }
+
+        // Deleting from grade_submissions will cascade delete from grades table
+        const deleteResult = await db.query('DELETE FROM grade_submissions WHERE submission_id = $1 RETURNING submission_id', [submission_id]);
+
+        if (deleteResult.rowCount === 0) {
             // Should not happen if previous check passed
-            return res.status(404).json({ error: 'Grade entry not found for deletion, though it was just found.' });
+            await db.query('ROLLBACK');
+            return res.status(404).json({ error: 'Grade submission not found for deletion, though it was just found.' });
         }
+        
+        await db.query('COMMIT');
 
         // If deletion from DB was successful, delete the associated file
-        if (filePathToDelete) {
-            fs.unlink(filePathToDelete, (err) => {
-                if (err) {
-                    console.error('Failed to delete grades file from storage:', err);
-                    // Log error, but the main record is deleted. Consider how to handle orphaned files.
-                }
-            });
+        deleteFile(filePathToDelete);
+
+        res.status(200).json({ message: 'Grade submission and associated grades deleted successfully', submission_id: submission_id });
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('Error deleting grade submission:', error);
+        res.status(500).json({ error: 'Failed to delete grade submission.', details: error.message });
+    }
+};
+
+// 4. Finalize Grade Submission
+exports.finalizeGradeSubmission = async (req, res) => {
+    const { submission_id } = req.params; // Changed from grades_ID to submission_id
+    const user_service_id = req.user?.user_service_id;
+
+    if (!user_service_id) {
+        return res.status(401).json({ error: 'User not authenticated.' });
+    }
+
+    try {
+        const submissionCheck = await db.query(
+            'SELECT owner_user_service_id, finalized FROM grade_submissions WHERE submission_id = $1',
+            [submission_id]
+        );
+
+        if (submissionCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Grade submission not found.' });
         }
 
-        res.status(200).json({ message: 'Grades deleted successfully', grades_id: grades_ID });
+        const submission = submissionCheck.rows[0];
+
+        if (submission.owner_user_service_id !== user_service_id) {
+            return res.status(403).json({ error: 'Forbidden: You are not the owner of this submission.' });
+        }
+
+        if (submission.finalized) {
+            return res.status(400).json({ message: 'Grade submission is already finalized.' });
+        }
+
+        // TODO: Add any pre-finalization checks here. 
+        // For example, ensure all grades from the file have been successfully processed and inserted.
+        // This might involve checking the count of grades in the `grades` table against expectations.
+
+        await db.query(
+            'UPDATE grade_submissions SET finalized = TRUE, updated_at = CURRENT_TIMESTAMP WHERE submission_id = $1',
+            [submission_id]
+        );
+
+        res.status(200).json({ message: 'Grade submission finalized successfully. No further edits allowed.', submission_id: submission_id });
     } catch (error) {
-        console.error('Error deleting grades:', error);
-        res.status(500).json({ error: 'Failed to delete grades.', details: error.message });
+        console.error('Error finalizing grade submission:', error);
+        res.status(500).json({ error: 'Failed to finalize grade submission.', details: error.message });
     }
 };
