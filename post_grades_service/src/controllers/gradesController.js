@@ -2,6 +2,7 @@ const db = require('../database/db');
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser'); // Added for CSV parsing
+const gradesMessaging = require('../messaging/gradesMessaging'); // Added for messaging
 
 // Ensure the uploads directory exists
 const uploadsDir = path.join(__dirname, '../../uploads'); // Adjust path as necessary
@@ -122,6 +123,19 @@ exports.uploadAndProcessGrades = async (req, res) => {
         await processGradesFile(filePath, submissionId);
 
         await db.query('COMMIT');
+        
+        // Publish the grades to the message queue - This happens after transaction commit
+        // We don't want to block the response, so we don't await this
+        gradesMessaging.publishSubmissionGrades(submissionId)
+            .then(success => {
+                if (!success) {
+                    console.warn(`Failed to publish grades for submission ${submissionId}`);
+                }
+            })
+            .catch(err => {
+                console.error(`Error publishing grades for submission ${submissionId}:`, err);
+            });
+
         res.status(201).json({ 
             message: 'Grade submission and grades processed successfully.', 
             submission_id: submissionId
@@ -199,6 +213,17 @@ exports.updateGradeSubmissionFile = async (req, res) => {
         if (oldFilePath && oldFilePath !== newFilePath) {
             deleteFile(oldFilePath);
         }
+
+        // Publish updated grades to the message queue
+        gradesMessaging.publishSubmissionGrades(submission_id)
+            .then(success => {
+                if (!success) {
+                    console.warn(`Failed to publish updated grades for submission ${submission_id}`);
+                }
+            })
+            .catch(err => {
+                console.error(`Error publishing updated grades for submission ${submission_id}:`, err);
+            });
 
         res.status(200).json({ 
             message: 'Grade submission file updated and grades re-processed successfully.', 
@@ -302,14 +327,38 @@ exports.finalizeGradeSubmission = async (req, res) => {
             return res.status(400).json({ message: 'Grade submission is already finalized.' });
         }
 
-        // TODO: Add any pre-finalization checks here. 
-        // For example, ensure all grades from the file have been successfully processed and inserted.
-        // This might involve checking the count of grades in the `grades` table against expectations.
+        // Check if there are any grades associated with this submission
+        const gradesCountResult = await db.query(
+            'SELECT COUNT(*) FROM grades WHERE submission_id = $1',
+            [submission_id]
+        );
+        
+        const gradesCount = parseInt(gradesCountResult.rows[0].count, 10);
+        if (gradesCount === 0) {
+            return res.status(400).json({ 
+                error: 'Cannot finalize submission with no grades. Please ensure grades have been processed.' 
+            });
+        }
 
         await db.query(
             'UPDATE grade_submissions SET finalized = TRUE, updated_at = CURRENT_TIMESTAMP WHERE submission_id = $1',
             [submission_id]
         );
+
+        // Publish the finalization event and all grades
+        // Run these asynchronously without blocking the response
+        Promise.all([
+            gradesMessaging.publishFinalization(submission_id),
+            gradesMessaging.publishSubmissionGrades(submission_id)
+        ])
+        .then(([finalizationSuccess, gradesSuccess]) => {
+            if (!finalizationSuccess || !gradesSuccess) {
+                console.warn(`Some messaging operations failed for finalized submission ${submission_id}`);
+            }
+        })
+        .catch(err => {
+            console.error(`Error in messaging operations for finalized submission ${submission_id}:`, err);
+        });
 
         res.status(200).json({ message: 'Grade submission finalized successfully. No further edits allowed.', submission_id: submission_id });
     } catch (error) {

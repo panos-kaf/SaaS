@@ -6,63 +6,134 @@ This service is responsible for managing grade submissions. It allows users to u
 
 All endpoints are prefixed with `/api`.
 
-### 1. Post Grades
-*   **Endpoint:** `/post-grades`
+### 1. Upload and Process Grades
+*   **Endpoint:** `/grade-submissions`
 *   **Method:** `POST`
-*   **Description:** Uploads a new set of grades for a specific course.
+*   **Description:** Uploads a new CSV file containing grades, creates a submission record, and processes the grades.
 *   **Request Body (multipart/form-data):**
-    *   `course_name` (String): Name of the course.
-    *   `exam_period` (String): The examination period (e.g., "June 2024").
-    *   `date` (String): Date of the exam/submission (Format: YYYY-MM-DD).
-    *   `professor` (String): Name of the professor.
     *   `gradesFile` (File): The CSV file containing the grades.
+*   **Authentication:** Required (user_service_id is extracted from the authenticated user)
 *   **Response:**
-    *   `201 Created`: JSON object with `message` and `grades_id`.
+    *   `201 Created`: JSON object with `message` and `submission_id`.
         ```json
         {
-          "message": "Grades posted successfully",
-          "grades_id": 123
+          "message": "Grade submission and grades processed successfully.",
+          "submission_id": 123
         }
         ```
     *   `400 Bad Request`: JSON object with `error` message if required fields are missing or data is invalid.
+    *   `401 Unauthorized`: JSON object with `error` message if user is not authenticated.
     *   `500 Internal Server Error`: JSON object with `error` message if the server encounters an issue.
 
-### 2. Edit Grades
-*   **Endpoint:** `/edit-grades/<grades_ID>`
-*   **Method:** `PUT` (Note: Changed from UPDATE to PUT for RESTful conventions)
-*   **Description:** Updates an already saved grade submission with a new CSV file.
+### 2. Update Grade Submission File
+*   **Endpoint:** `/grade-submissions/:submission_id/file`
+*   **Method:** `PUT`
+*   **Description:** Updates a non-finalized grade submission with a new CSV file.
 *   **URL Parameters:**
-    *   `grades_ID` (Integer): The ID of the grade entry to update.
+    *   `submission_id` (Integer): The ID of the submission to update.
 *   **Request Body (multipart/form-data):**
     *   `gradesFile` (File): The new CSV file to replace the existing one.
+*   **Authentication:** Required (must be the owner of the submission)
 *   **Response:**
-    *   `200 OK`: JSON object with `message` and `grades_id`.
+    *   `200 OK`: JSON object with `message` and `submission_id`.
         ```json
         {
-          "message": "Grades updated successfully",
-          "grades_id": 123
+          "message": "Grade submission file updated and grades re-processed successfully.",
+          "submission_id": 123
         }
         ```
     *   `400 Bad Request`: JSON object with `error` if `gradesFile` is missing.
-    *   `404 Not Found`: JSON object with `error` if the `grades_ID` does not exist.
+    *   `401 Unauthorized`: JSON object with `error` message if user is not authenticated.
+    *   `403 Forbidden`: JSON object with `error` if the user is not the owner or if the submission is finalized.
+    *   `404 Not Found`: JSON object with `error` if the `submission_id` does not exist.
     *   `500 Internal Server Error`: JSON object with `error` message.
 
-### 3. Delete Grades
-*   **Endpoint:** `/delete-grades/<grades_ID>`
+### 3. Delete Grade Submission
+*   **Endpoint:** `/grade-submissions/:submission_id`
 *   **Method:** `DELETE`
-*   **Description:** Deletes a grade registration from the database and the associated file from storage.
+*   **Description:** Deletes a grade submission, all its associated grades, and the CSV file.
 *   **URL Parameters:**
-    *   `grades_ID` (Integer): The ID of the grade entry to delete.
+    *   `submission_id` (Integer): The ID of the submission to delete.
+*   **Authentication:** Required (must be the owner of the submission or an admin)
 *   **Response:**
-    *   `200 OK`: JSON object with `message` and `grades_id`.
+    *   `200 OK`: JSON object with `message` and `submission_id`.
         ```json
         {
-          "message": "Grades deleted successfully",
-          "grades_id": 123
+          "message": "Grade submission and associated grades deleted successfully",
+          "submission_id": 123
         }
         ```
-    *   `404 Not Found`: JSON object with `error` if the `grades_ID` does not exist.
+    *   `401 Unauthorized`: JSON object with `error` message if user is not authenticated.
+    *   `403 Forbidden`: JSON object with `error` if the user is not the owner or an admin, or if the submission is finalized and the user is not an admin.
+    *   `404 Not Found`: JSON object with `error` if the `submission_id` does not exist.
     *   `500 Internal Server Error`: JSON object with `error` message.
+
+### 4. Finalize Grade Submission
+*   **Endpoint:** `/grade-submissions/:submission_id/finalize`
+*   **Method:** `POST`
+*   **Description:** Finalizes a grade submission, preventing further edits.
+*   **URL Parameters:**
+    *   `submission_id` (Integer): The ID of the submission to finalize.
+*   **Authentication:** Required (must be the owner of the submission)
+*   **Response:**
+    *   `200 OK`: JSON object with `message` and `submission_id`.
+        ```json
+        {
+          "message": "Grade submission finalized successfully. No further edits allowed.",
+          "submission_id": 123
+        }
+        ```
+    *   `400 Bad Request`: JSON object with `error` if the submission is already finalized or has no grades.
+    *   `401 Unauthorized`: JSON object with `error` message if user is not authenticated.
+    *   `403 Forbidden`: JSON object with `error` if the user is not the owner.
+    *   `404 Not Found`: JSON object with `error` if the `submission_id` does not exist.
+    *   `500 Internal Server Error`: JSON object with `error` message.
+
+## Messaging System
+
+This service publishes grade information to a RabbitMQ message broker using the AMQP protocol. Other services can subscribe to these messages to receive real-time updates about grades.
+
+### Exchange
+
+*   **Exchange Name:** `grades_exchange`
+*   **Exchange Type:** `fanout` (broadcasts messages to all bound queues)
+
+### Published Messages
+
+1. **Individual Grades**
+   *   Published when grades are uploaded or updated
+   *   Format: JSON object containing grade information
+
+2. **Grade Submission Finalization**
+   *   Published when a grade submission is finalized
+   *   Format:
+     ```json
+     {
+       "event": "grade_submission_finalized",
+       "submission_id": 123,
+       "timestamp": "2025-05-16T12:34:56.789Z"
+     }
+     ```
+
+### Consuming Messages
+
+Other services can consume these messages by:
+1. Creating a queue
+2. Binding the queue to the `grades_exchange` exchange
+3. Setting up a consumer to process incoming messages
+
+## Database Schema
+
+The service uses a PostgreSQL database with the following tables:
+
+### `users_profile`
+Stores user profile information retrieved from the user management service.
+
+### `grade_submissions`
+Stores information about grade file submissions, including their finalization status.
+
+### `grades`
+Stores individual grade records extracted from uploaded CSV files.
 
 ## Setup and Running the Service
 
@@ -79,26 +150,47 @@ All endpoints are prefixed with `/api`.
     ```bash
     cd post_grades_service
     ```
-3.  **Create a `.env` file** in the `post_grades_service` directory (optional, for overriding default environment variables in `docker-compose.yml`):
+3.  **Create a `.env` file** in the `post_grades_service` directory (optional):
     ```env
     POSTGRES_USER=your_custom_user
     POSTGRES_PASSWORD=your_strong_password
     POSTGRES_DB=post_grades_db
-    # POST_GRADES_PORT=3002 # Already set in docker-compose
-    # NODE_ENV=development # Already set in docker-compose
+    RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     ```
-    If you create a `.env` file, make sure the `POSTGRES_USER` and `POSTGRES_PASSWORD` here match the ones you might set for the `post-grades-db` service in the `docker-compose.yml` or its own environment variables if you customize them there. The defaults in `docker-compose.yml` are `your_db_user` and `your_db_password`.
 
 4.  **Build and run the containers using Docker Compose:**
     ```bash
     docker-compose up --build
     ```
-    This will start the Node.js application and the PostgreSQL database. The application will be accessible at `http://localhost:3002`. The PostgreSQL database will be accessible on host port `5435`.
+    This will start:
+    - The Node.js application (accessible at `http://localhost:3002`)
+    - The PostgreSQL database (accessible on host port `5435`)
+    - RabbitMQ (AMQP on port `5672`, Management UI on port `15672`)
 
 5.  **To stop the services:**
     ```bash
     docker-compose down
     ```
+
+### CSV File Format
+
+The service expects CSV files with the following headers:
+* `course_id`: ID of the course from another service
+* `prof_id`: ID of the professor from another service
+* `student_academic_number`: Academic number of the student
+* `student_name`: Full name of the student
+* `student_email`: Email of the student (optional)
+* `semester`: The semester/year of the course (e.g., "2024-Spring")
+* `course_name`: Name of the course
+* `course_code`: Course code
+* `grade_scale`: The scale used for grading (e.g., "0-10", "A-F")
+* `grade`: The actual grade
+
+Example:
+```csv
+course_id,prof_id,student_academic_number,student_name,student_email,semester,course_name,course_code,grade_scale,grade
+CS101,PROF456,ST12345,John Doe,john.doe@example.com,2025-Spring,Introduction to Computer Science,CS101,0-10,8.5
+```
 
 ### Database
 *   The service uses a PostgreSQL database.

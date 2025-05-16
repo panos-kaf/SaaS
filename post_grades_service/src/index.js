@@ -1,16 +1,40 @@
 const express = require('express');
 const gradesRoutes = require('./routes/gradesRoutes');
+const { initializeMessaging } = require('./messaging/setup');
+const config = require('./config/config');
 
 const app = express();
-// It's good practice to use a different port for each microservice.
-// Consider using environment variables for port configuration in a real app.
-const port = process.env.POST_GRADES_PORT || 3002;
+// Using config for port
+const port = config.PORT || 3002;
 
 app.use(express.json()); // Middleware to parse JSON bodies
 
 // All routes for this service will be prefixed with /api
 app.use('/api', gradesRoutes);
 
+// Initialize the messaging system
+initializeMessaging().catch(err => {
+  console.error('Failed to initialize messaging:', err);
+  // Continue starting the server even if messaging fails
+});
+
 app.listen(port, () => {
   console.log(`Post Grades Service running on port ${port}`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM signal received. Shutting down gracefully...');
+  // Close RabbitMQ connection
+  const publisher = require('./messaging/publisher');
+  await publisher.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT signal received. Shutting down gracefully...');
+  // Close RabbitMQ connection
+  const publisher = require('./messaging/publisher');
+  await publisher.close();
+  process.exit(0);
 });
