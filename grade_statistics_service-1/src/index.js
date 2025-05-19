@@ -2,15 +2,27 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const config = require('./config/config');
+const { initializeMessaging } = require('./messaging/setup');
 const setRoutes = require('./routes/statisticsRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT || 3000;
 
+// Initialize middleware
 app.use(bodyParser.json());
 
+// Set routes
 setRoutes(app);
 
-app.listen(PORT, () => {
+// Start the server
+app.listen(PORT, async () => {
     console.log(`Grade Statistics Service is running on port ${PORT}`);
+    
+    // Initialize messaging after server is started
+    try {
+        await initializeMessaging();
+    } catch (error) {
+        console.error('Failed to initialize messaging:', error);
+    }
 });

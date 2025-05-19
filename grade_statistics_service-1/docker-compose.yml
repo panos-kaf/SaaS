@@ -9,8 +9,16 @@ services:
       - "3000:3000"
     depends_on:
       - db
+      - rabbitmq
     environment:
       - DATABASE_URL=postgres://user:password@db:5432/grade_statistics_db
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_NAME=grade_statistics_db
+      - DB_PORT=5432
+    restart: always
 
   db:
     image: postgres:latest
@@ -21,3 +29,19 @@ services:
       POSTGRES_DB: grade_statistics_db
     ports:
       - "5432:5432"
+    volumes:
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI port
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    restart: always
+
+volumes:
+  postgres_data:

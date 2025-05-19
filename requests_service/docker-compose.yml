@@ -27,7 +27,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=requests_db
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 

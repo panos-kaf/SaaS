@@ -6,7 +6,7 @@ const requestsController = require('../controllers/requestsController');
 router.post('/post-request/:courseID/:userID', requestsController.createRequest);
 
 // Delete a request
-router.delete('/delete-request/:requestID', requestsController.deleteRequest);
+router.delete('/delete-request/:requestID/:userID', requestsController.deleteRequest);
 
 // View requests for a user
 router.get('/view-requests/:userID', requestsController.getRequestsByUser);

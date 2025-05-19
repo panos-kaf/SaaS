@@ -13,8 +13,8 @@ RUN npm install
 # Now copy the rest of the source code
 COPY . .
 
-# Expose the service port (adjust if different)
+# Expose the service port
 EXPOSE 3000
 
 # Start the app
-CMD ["node", "src/index.js"]
+CMD ["npm", "start"]

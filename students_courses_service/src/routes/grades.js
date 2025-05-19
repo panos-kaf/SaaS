@@ -1,25 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { getCoursesByStudentId, getGrade } = require('../models/queries');
+const coursesController = require('../controllers/coursesController');
 
-router.get('/students/:id/courses', async (req, res) => {
-  try {
-    const courses = await getCoursesByStudentId(req.params.id);
-    res.json(courses);
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
-});
+// Get all courses for a specific user
+router.get('/get-courses/:user_ID', coursesController.getCourses);
 
-router.get('/students/:id/courses/:courseId/grade', async (req, res) => {
-  try {
-    const { id, courseId } = req.params;
-    const result = await getGrade(id, courseId);
-    if (result) res.json(result);
-    else res.status(404).json({ error: 'Not found' });
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
-});
+// Add a course for a specific user
+router.post('/add-course/:course_ID/:user_ID', coursesController.addCourse);
+
+// Get grade for a specific user and course
+router.get('/get-grade/:user_ID/:course_ID', coursesController.getGrade);
+
+// Get all available courses
+router.get('/courses', coursesController.getAllCourses);
 
 module.exports = router;
