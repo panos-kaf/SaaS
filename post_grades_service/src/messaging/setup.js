@@ -1,4 +1,5 @@
 const publisher = require('./publisher');
+const subscriber = require('./subscriber');
 const config = require('../config/config');
 
 /**
@@ -9,14 +10,22 @@ const initializeMessaging = async () => {
   try {
     // Get RabbitMQ URL from config or use default
     const amqpUrl = config.RABBITMQ_URL || 'amqp://rabbitmq:5672';
+    
+    // Initialize the publisher
     await publisher.init(amqpUrl);
-    console.log('Messaging system initialized');
+    
+    // Initialize the subscriber
+    await subscriber.init(amqpUrl);
+    
+    console.log('Messaging system initialized (publisher and subscriber)');
   } catch (error) {
     console.error('Failed to initialize messaging system:', error);
-    // The publisher has its own retry mechanism, so we don't need to throw here
+    // Both publisher and subscriber have their own retry mechanisms
   }
 };
 
 module.exports = {
-  initializeMessaging
+  initializeMessaging,
+  publisher,
+  subscriber
 };

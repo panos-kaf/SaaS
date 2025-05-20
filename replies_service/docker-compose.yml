@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  replies_service:
+    build: .
+    container_name: replies_service
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - NODE_ENV=development
+      - POSTGRES_HOST=replies_db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=repliesdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - replies_db
+      - rabbitmq
+    networks:
+      - replies-network
+      - academic-network
+    restart: unless-stopped
+
+  replies_db:
+    image: postgres:14
+    container_name: replies_db
+    ports:
+      - "5436:5432"  # Using a different port to avoid conflicts with other services
+    environment:
+      - POSTGRES_DB=repliesdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - replies_db_data:/var/lib/postgresql/data
+    networks:
+      - replies-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: replies_rabbitmq
+    ports:
+      - "5672:5672"  # AMQP port
+      - "15672:15672" # Management UI port
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - replies-network
+      - academic-network
+    restart: unless-stopped
+
+networks:
+  replies-network:
+    driver: bridge
+  academic-network:
+    external: true  # This network should exist for connecting to other services
+
+volumes:
+  replies_db_data:
+  rabbitmq_data:

@@ -12,8 +12,10 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=requests_db
+      - RABBITMQ_URL=amqp://rabbitmq:5672
     depends_on:
       - postgres
+      - rabbitmq
     volumes:
       - ./src:/app/src
     restart: unless-stopped
@@ -31,5 +33,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI port
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  rabbitmq_data:

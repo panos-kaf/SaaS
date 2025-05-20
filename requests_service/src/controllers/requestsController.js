@@ -1,4 +1,5 @@
 const db = require('../database/db');
+const { publisher } = require('../messaging/setup');
 
 // Creates a new review request
 const createRequest = async (req, res) => {
@@ -11,11 +12,20 @@ const createRequest = async (req, res) => {
     }
 
     const result = await db.query(
-      'INSERT INTO requests (owner_id, grade_id, prof_id, request_body, status) VALUES ($1, $2, $3, $4, $5) RETURNING request_id',
+      'INSERT INTO requests (owner_id, grade_id, prof_id, request_body, status) VALUES ($1, $2, $3, $4, $5) RETURNING request_id, owner_id, grade_id, prof_id, request_body, status, timestamp',
       [userID, gradeID, profID, requestBody, 'open']
     );
 
-    return res.status(201).json({ requestID: result.rows[0].request_id });
+    const newRequest = result.rows[0];
+
+    // Publish the new request to RabbitMQ
+    if (publisher.connected) {
+      await publisher.publishRequest(newRequest);
+    } else {
+      console.warn('RabbitMQ publisher not connected, unable to publish request');
+    }
+
+    return res.status(201).json({ requestID: newRequest.request_id });
   } catch (error) {
     console.error('Error creating request:', error);
     return res.status(500).json({ error: 'Failed to create request' });

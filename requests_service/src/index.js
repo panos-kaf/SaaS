@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const requestsRoutes = require('./routes/requestsRoutes');
+const { initializeMessaging } = require('./messaging/setup');
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +34,31 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Requests service running on port ${PORT}`);
+  
+  // Initialize the messaging system
+  try {
+    await initializeMessaging();
+    console.log('Messaging system initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize messaging system:', error);
+  }
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM signal received. Shutting down gracefully...');
+  // Close RabbitMQ connection
+  const { subscriber } = require('./messaging/setup');
+  await subscriber.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT signal received. Shutting down gracefully...');
+  // Close RabbitMQ connection
+  const { subscriber } = require('./messaging/setup');
+  await subscriber.close();
+  process.exit(0);
 });

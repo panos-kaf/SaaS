@@ -1,7 +1,7 @@
 {
-  "name": "requests_service",
+  "name": "replies_service",
   "version": "1.0.0",
-  "description": "Microservice for managing grade review requests",
+  "description": "Microservice for managing replies to grade review requests",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "amqplib": "^0.10.3",
-    "express": "^4.18.2",
-    "pg": "^8.11.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "morgan": "^1.10.0"
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.11.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^2.0.22"
   }
 }
