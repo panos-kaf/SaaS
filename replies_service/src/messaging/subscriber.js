@@ -9,17 +9,17 @@ class MessagingSubscriber {
     // User events configuration
     this.userConnection = null;
     this.userChannel = null;
-    this.userExchange = 'user_events';
+    this.usersExchange = 'users_exchange';
     this.userExchangeType = 'fanout';
     this.userQueueName = 'replies_service_users';
     
     // Request events configuration
     this.requestConnection = null;
     this.requestChannel = null;
-    this.requestExchange = 'request_events';
+    this.requestExchange = 'reaquests_exchange';
     this.requestExchangeType = 'direct';
     this.requestQueueName = 'replies_service_requests';
-    this.requestRoutingKey = 'request_events';
+    this.requestRoutingKey = 'new_request';
     
     // Connection state
     this.userConnected = false;
