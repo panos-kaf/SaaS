@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
 
   post_grades_db:
-    image: postgres:13-alpine
+    image: postgres:14-alpine
     container_name: post_grades_db
     ports:
       - "5435:5432"
@@ -109,7 +109,7 @@ services:
     restart: unless-stopped
 
   requests_db:
-    image: postgres:15
+    image: postgres:14-alpine
     container_name: requests_db
     ports:
       - "5433:5432"
@@ -152,7 +152,7 @@ services:
     restart: unless-stopped
 
   replies_db:
-    image: postgres:14
+    image: postgres:14-alpine
     container_name: replies_db
     ports:
       - "5436:5432"
@@ -224,7 +224,7 @@ services:
     restart: unless-stopped
 
   grade_statistics_db:
-    image: postgres:latest
+    image: postgres:14-alpine
     container_name: grade_statistics_db
     restart: unless-stopped
     environment:
@@ -244,7 +244,7 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"   # AMQP port
+      - "5673:5672"   # Changed from 5672:5672 to avoid conflict
       - "15672:15672" # Management UI port
     environment:
       - RABBITMQ_DEFAULT_USER=guest
