@@ -1,12 +1,13 @@
 const publisher = require('./publisher');
 const subscriber = require('./subscriber');
+const config = require('../config/config');
 
 /**
  * Initialize all messaging connections
  * @param {string} amqpUrl - The URL to connect to RabbitMQ
  * @returns {Promise<boolean>} - True if all connections are established successfully
  */
-const initMessaging = async (amqpUrl = 'amqp://rabbitmq:5672') => {
+const initMessaging = async (amqpUrl = config.RABBITMQ_URL) => {
   try {
     // Initialize the publisher
     const publisherInitialized = await publisher.init(amqpUrl);

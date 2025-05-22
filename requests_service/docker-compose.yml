@@ -4,15 +4,18 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "3005:3005"
     environment:
       - NODE_ENV=development
+      - PORT=3005
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=requests_db
       - RABBITMQ_URL=amqp://rabbitmq:5672
+      - REQUESTS_EXCHANGE=requests_exchange
+      - REQUESTS_ROUTING_KEY=new_request
     depends_on:
       - postgres
       - rabbitmq

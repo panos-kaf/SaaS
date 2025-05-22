@@ -1,6 +1,7 @@
 const subscriber = require('./subscriber');
 const publisher = require('./publisher');
 const gradesSubscriber = require('./gradesSubscriber');
+const config = require('../config/config');
 
 /**
  * Initialize the messaging system
@@ -8,8 +9,8 @@ const gradesSubscriber = require('./gradesSubscriber');
  */
 const initializeMessaging = async () => {
   try {
-    // Get RabbitMQ URL from environment variables or use default
-    const amqpUrl = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
+    // Get RabbitMQ URL from config
+    const amqpUrl = config.RABBITMQ_URL;
     
     // Initialize the user profile subscriber
     await subscriber.init(amqpUrl);

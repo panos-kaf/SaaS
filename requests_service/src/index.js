@@ -1,15 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
+const config = require('./config/config');
 const requestsRoutes = require('./routes/requestsRoutes');
 const { initializeMessaging } = require('./messaging/setup');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables handled by dotenv in config
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT;
 
 // Middleware
 app.use(cors());

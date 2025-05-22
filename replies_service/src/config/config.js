@@ -14,6 +14,12 @@ module.exports = {
   // RabbitMQ configuration
   RABBITMQ_HOST: process.env.RABBITMQ_HOST || 'rabbitmq',
   RABBITMQ_PORT: process.env.RABBITMQ_PORT || 5672,
+  RABBITMQ_URL: process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672',
+  
+  // Exchange and routing keys for RabbitMQ
+  USERS_EXCHANGE: process.env.USERS_EXCHANGE || 'users_exchange',
+  REQUESTS_EXCHANGE: process.env.REQUESTS_EXCHANGE || 'requests_exchange',
+  REQUESTS_ROUTING_KEY: process.env.REQUESTS_ROUTING_KEY || 'new_request',
   
   // Service identifiers
   SERVICE_NAME: 'replies-service'

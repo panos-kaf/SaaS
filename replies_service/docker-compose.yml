@@ -15,6 +15,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - REQUESTS_EXCHANGE=requests_exchange
+      - REQUESTS_ROUTING_KEY=new_request
+      - USERS_EXCHANGE=users_exchange
     depends_on:
       - replies_db
       - rabbitmq

@@ -1,4 +1,5 @@
 const amqp = require('amqplib');
+const config = require('../config/config');
 
 /**
  * Class for handling RabbitMQ connection and publishing request messages
@@ -7,9 +8,9 @@ class MessagingPublisher {
   constructor() {
     this.connection = null;
     this.channel = null;
-    this.requestsExchange = 'requests_exchange';
+    this.requestsExchange = config.REQUESTS_EXCHANGE;
     this.exchangeType = 'direct';
-    this.routingKey = 'new_request';
+    this.routingKey = config.REQUESTS_ROUTING_KEY;
     this.connected = false;
     this.retryCount = 0;
     this.maxRetries = 10;
@@ -21,7 +22,7 @@ class MessagingPublisher {
    * @param {string} amqpUrl - The URL to connect to RabbitMQ
    * @returns {Promise<void>} - Resolves when connected
    */
-  async init(amqpUrl = 'amqp://rabbitmq:5672') {
+  async init(amqpUrl = config.RABBITMQ_URL) {
     try {
       // Try to connect to RabbitMQ
       this.connection = await amqp.connect(amqpUrl);

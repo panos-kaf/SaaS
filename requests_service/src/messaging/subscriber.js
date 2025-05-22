@@ -1,5 +1,6 @@
 const amqp = require('amqplib');
 const db = require('../database/db');
+const config = require('../config/config');
 
 /**
  * Class for handling RabbitMQ connection and consuming user profile messages
@@ -22,7 +23,7 @@ class MessagingSubscriber {
    * @param {string} amqpUrl - The URL to connect to RabbitMQ
    * @returns {Promise<void>} - Resolves when connected
    */
-  async init(amqpUrl = 'amqp://rabbitmq:5672') {
+  async init(amqpUrl = config.RABBITMQ_URL) {
     try {
       // Try to connect to RabbitMQ
       this.connection = await amqp.connect(amqpUrl);

@@ -1,5 +1,6 @@
 const amqp = require('amqplib');
 const db = require('../database/db');
+const config = require('../config/config');
 
 /**
  * Class for handling RabbitMQ connections and message consumption
@@ -9,17 +10,17 @@ class MessagingSubscriber {
     // User events configuration
     this.userConnection = null;
     this.userChannel = null;
-    this.usersExchange = 'users_exchange';
+    this.usersExchange = config.USERS_EXCHANGE;
     this.userExchangeType = 'fanout';
     this.userQueueName = 'replies_service_users';
     
     // Request events configuration
     this.requestConnection = null;
     this.requestChannel = null;
-    this.requestExchange = 'reaquests_exchange';
+    this.requestExchange = config.REQUESTS_EXCHANGE;
     this.requestExchangeType = 'direct';
     this.requestQueueName = 'replies_service_requests';
-    this.requestRoutingKey = 'new_request';
+    this.requestRoutingKey = config.REQUESTS_ROUTING_KEY;
     
     // Connection state
     this.userConnected = false;
@@ -73,7 +74,7 @@ class MessagingSubscriber {
       this.userChannel = await this.userConnection.createChannel();
       
       // Assert the exchange
-      await this.userChannel.assertExchange(this.userExchange, this.userExchangeType, {
+      await this.userChannel.assertExchange(this.usersExchange, this.userExchangeType, {
         durable: true
       });
 
@@ -84,8 +85,8 @@ class MessagingSubscriber {
       });
 
       // Bind the queue to the exchange
-      await this.userChannel.bindQueue(q.queue, this.userExchange, '');
-      console.log(`Queue '${q.queue}' bound to exchange '${this.userExchange}'`);
+      await this.userChannel.bindQueue(q.queue, this.usersExchange, '');
+      console.log(`Queue '${q.queue}' bound to exchange '${this.usersExchange}'`);
 
       // Set up consumer
       await this.setupUserConsumer(q.queue);
