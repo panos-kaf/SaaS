@@ -13,11 +13,8 @@ class CoursesController {
    */
   async getCourses(req, res) {
     try {
-      const userId = parseInt(req.params.user_ID);
-      
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: 'Invalid user ID' });
-      }
+      // Get user ID from the JWT token
+      const userId = req.user.id;
       
       const courses = await getCoursesByUserId(userId);
       
@@ -45,10 +42,11 @@ class CoursesController {
    */
   async addCourse(req, res) {
     try {
-      const userId = parseInt(req.params.user_ID);
+      // User ID for the student to add the course for
+      const userId = req.body.studentId; // This should be provided in the request body
       const courseId = parseInt(req.params.course_ID);
       
-      if (isNaN(userId) || isNaN(courseId)) {
+      if (!userId || isNaN(courseId)) {
         return res.status(400).json({ error: 'Invalid user ID or course ID' });
       }
       
@@ -82,11 +80,12 @@ class CoursesController {
    */
   async getGrade(req, res) {
     try {
-      const userId = parseInt(req.params.user_ID);
+      // Get user ID from the JWT token
+      const userId = req.user.id;
       const courseId = parseInt(req.params.course_ID);
       
-      if (isNaN(userId) || isNaN(courseId)) {
-        return res.status(400).json({ error: 'Invalid user ID or course ID' });
+      if (isNaN(courseId)) {
+        return res.status(400).json({ error: 'Invalid course ID' });
       }
       
       const grade = await getGradeForUserCourse(userId, courseId);

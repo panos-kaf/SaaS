@@ -95,15 +95,11 @@ const processGradesFile = (filePath, submissionId) => {
 // and then expects individual grades to be parsed from the file and inserted.
 exports.uploadAndProcessGrades = async (req, res) => {
     const file = req.file;
-    // Assuming owner_user_service_id comes from authenticated user session/token
-    const owner_user_service_id = req.user?.user_service_id; 
+    // Get user ID from JWT token
+    const owner_user_service_id = req.user.id;
 
     if (!file) {
         return res.status(400).json({ error: 'Grades file is required.' });
-    }
-    if (!owner_user_service_id) {
-        deleteFile(file.path);
-        return res.status(401).json({ error: 'User not authenticated or user_service_id missing.' });
     }
 
     const filePath = file.path;
@@ -153,14 +149,10 @@ exports.uploadAndProcessGrades = async (req, res) => {
 exports.updateGradeSubmissionFile = async (req, res) => {
     const { submission_id } = req.params;
     const file = req.file;
-    const user_service_id = req.user?.user_service_id;
+    const user_service_id = req.user.id;
 
     if (!file) {
         return res.status(400).json({ error: 'New grades file is required for update.' });
-    }
-    if (!user_service_id) {
-        deleteFile(file.path);
-        return res.status(401).json({ error: 'User not authenticated.' });
     }
 
     const newFilePath = file.path;
@@ -241,12 +233,8 @@ exports.updateGradeSubmissionFile = async (req, res) => {
 // 3. Delete Grade Submission (replaces old deleteGrades)
 exports.deleteGradeSubmission = async (req, res) => {
     const { submission_id } = req.params;
-    const user_service_id = req.user?.user_service_id;
-    const user_role = req.user?.role; // Assuming role is available for admin override
-
-    if (!user_service_id) {
-        return res.status(401).json({ error: 'User not authenticated.' });
-    }
+    const user_service_id = req.user.id;
+    const user_role = req.user.role;
 
     try {
         await db.query('BEGIN');
@@ -265,7 +253,7 @@ exports.deleteGradeSubmission = async (req, res) => {
         const filePathToDelete = submission.file_path;
 
         // Ownership check or admin override
-        if (submission.owner_user_service_id !== user_service_id && user_role !== 'admin') { // Example admin role
+        if (submission.owner_user_service_id !== user_service_id && user_role !== 'admin') {
             await db.query('ROLLBACK');
             return res.status(403).json({ error: 'Forbidden: You are not the owner or an admin.' });
         }
@@ -300,12 +288,8 @@ exports.deleteGradeSubmission = async (req, res) => {
 
 // 4. Finalize Grade Submission
 exports.finalizeGradeSubmission = async (req, res) => {
-    const { submission_id } = req.params; // Changed from grades_ID to submission_id
-    const user_service_id = req.user?.user_service_id;
-
-    if (!user_service_id) {
-        return res.status(401).json({ error: 'User not authenticated.' });
-    }
+    const { submission_id } = req.params;
+    const user_service_id = req.user.id;
 
     try {
         const submissionCheck = await db.query(

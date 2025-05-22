@@ -37,11 +37,13 @@ CREATE TABLE replies (
     user_id VARCHAR(255) NOT NULL,
     reply_body TEXT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (request_id) REFERENCES requests(request_id) ON DELETE CASCADE
+    FOREIGN KEY (request_id) REFERENCES requests(request_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users_profile(user_service_id) ON DELETE CASCADE
 );
 
 -- Create indexes for better query performance
 CREATE INDEX idx_replies_request_id ON replies(request_id);
+CREATE INDEX idx_replies_user_id ON replies(user_id);
 CREATE INDEX idx_requests_owner_id ON requests(owner_id);
 CREATE INDEX idx_requests_prof_id ON requests(prof_id);
 CREATE INDEX idx_users_profile_user_service_id ON users_profile(user_service_id);

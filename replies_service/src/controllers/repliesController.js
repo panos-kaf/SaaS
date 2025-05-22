@@ -6,7 +6,8 @@ const { publisher } = require('../messaging/setup');
  */
 const createReply = async (req, res) => {
   const { requestID } = req.params;
-  const { user_id, reply_body } = req.body;
+  const { reply_body } = req.body;
+  const user_id = req.user.id; // Get user_id from JWT token via auth middleware
   
   try {
     // Verify that the request exists
@@ -22,7 +23,7 @@ const createReply = async (req, res) => {
       });
     }
     
-    // Verify that the user exists
+    // Verify that the user exists (this should always pass due to JWT auth)
     const userCheck = await db.query(
       'SELECT * FROM users_profile WHERE user_service_id = $1',
       [user_id]
@@ -31,7 +32,7 @@ const createReply = async (req, res) => {
     if (userCheck.rows.length === 0) {
       return res.status(404).json({ 
         success: false, 
-        message: 'User not found' 
+        message: 'User not found in local database' 
       });
     }
     
@@ -61,11 +62,10 @@ const createReply = async (req, res) => {
 
 /**
  * Delete a reply
- * Only the owner of the reply can delete it
+ * Only the owner of the reply can delete it (enforced by middleware)
  */
 const deleteReply = async (req, res) => {
   const { replyID } = req.params;
-  const { user_id } = req.body; // From authentication middleware
   
   try {
     // Get the reply
@@ -81,15 +81,8 @@ const deleteReply = async (req, res) => {
       });
     }
     
-    const reply = replyCheck.rows[0];
-    
-    // Check ownership
-    if (reply.user_id !== user_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to delete this reply'
-      });
-    }
+    // Authorization check is now handled by middleware
+    // so we can directly delete the reply
     
     // Delete the reply
     await db.query(

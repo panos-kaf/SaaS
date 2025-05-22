@@ -3,8 +3,9 @@ const { publisher } = require('../messaging/setup');
 
 // Creates a new review request
 const createRequest = async (req, res) => {
-  const { courseID, userID } = req.params;
+  const { courseID } = req.params;
   const { requestBody, profID, gradeID } = req.body;
+  const userID = req.user.id; // Get user ID from JWT token
 
   try {
     if (!requestBody) {
@@ -35,12 +36,11 @@ const createRequest = async (req, res) => {
 // Deletes a review request
 const deleteRequest = async (req, res) => {
   const { requestID } = req.params;
-  const { userID } = req.body; // Assume userID is provided to check ownership
-
+  
   try {
-    // Verify request ownership
+    // Verify request exists
     const requestCheck = await db.query(
-      'SELECT owner_id FROM requests WHERE request_id = $1',
+      'SELECT request_id FROM requests WHERE request_id = $1',
       [requestID]
     );
 
@@ -48,10 +48,7 @@ const deleteRequest = async (req, res) => {
       return res.status(404).json({ error: 'Request not found' });
     }
 
-    if (requestCheck.rows[0].owner_id != userID) {
-      return res.status(403).json({ error: 'You do not have permission to delete this request' });
-    }
-
+    // Authorization is now handled by middleware
     await db.query(
       'DELETE FROM requests WHERE request_id = $1',
       [requestID]
@@ -66,8 +63,8 @@ const deleteRequest = async (req, res) => {
 
 // Retrieve all requests for a specific user (student or professor)
 const getRequestsByUser = async (req, res) => {
-  const { userID } = req.params;
-  const { role } = req.query; // 'student' or 'professor'
+  const userID = req.user.id; // Get user ID from JWT token
+  const { role } = req.user; // Get role from JWT token
 
   try {
     let result;
@@ -95,12 +92,11 @@ const getRequestsByUser = async (req, res) => {
 // Close a request
 const closeRequest = async (req, res) => {
   const { requestID } = req.params;
-  const { userID } = req.body; // Assume userID is provided to check ownership
-
+  
   try {
-    // Verify request ownership
+    // Verify request exists and check status
     const requestCheck = await db.query(
-      'SELECT owner_id, status FROM requests WHERE request_id = $1',
+      'SELECT status FROM requests WHERE request_id = $1',
       [requestID]
     );
 
@@ -108,9 +104,7 @@ const closeRequest = async (req, res) => {
       return res.status(404).json({ error: 'Request not found' });
     }
 
-    if (requestCheck.rows[0].owner_id != userID) {
-      return res.status(403).json({ error: 'You do not have permission to close this request' });
-    }
+    // Authorization is now handled by middleware
 
     if (requestCheck.rows[0].status === 'closed') {
       return res.status(400).json({ error: 'Request is already closed' });
