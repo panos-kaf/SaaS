@@ -80,8 +80,20 @@ const verifyResourceOwnership = (getResourceOwnerIdFn) => {
   };
 };
 
+/**
+ * Middleware to attach user info as x-user header for downstream services
+ */
+const attachUserHeader = (req, res, next) => {
+  if (req.user) {
+    req.headers['x-user'] = JSON.stringify(req.user);
+  }
+  next();
+};
+
+
 module.exports = {
   authenticateJWT,
   authorizeRoles,
-  verifyResourceOwnership
+  verifyResourceOwnership,
+  attachUserHeader
 };

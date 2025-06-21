@@ -73,7 +73,7 @@ const GradeUploadForm: React.FC = () => {
     formData.append('gradesFile', file);
 
     try {
-      const response = await fetch('http://localhost:3002/api/grade-submissions', {
+      const response = await fetch('http://localhost:3002/grade-submissions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`

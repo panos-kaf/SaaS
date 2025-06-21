@@ -1,91 +1,89 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const config = require('./config/config');
-const { authenticateJWT, authorizeRoles } = require('./middleware/auth');
+const { authenticateJWT, authorizeRoles, verifyResourceOwnership, attachUserHeader } = require('./middleware/auth');
 const cors = require('cors');
 
 const app = express();
-
 app.use(cors());
 
-// Proxy rules (you can adjust paths based on frontend requests)
+const apiRouter = express.Router();
 
+// Proxy rules (adjust paths as needed)
+
+// Uncomment and adjust if you want signup/signin
 /*
-// Public routes BEFORE /users authentication
-app.use('/signup', createProxyMiddleware({
+apiRouter.use('/signup', createProxyMiddleware({
   target: config.services.userManagement,
   changeOrigin: true,
-  pathRewrite: (path, req) => {
-    console.log(`Rewriting signup path: ${path} → /add-user`);
-    return '/add-user';
-  },
+  pathRewrite: (path, req) => '/add-user',
 }));
 
-app.use('/signin', createProxyMiddleware({
+apiRouter.use('/signin', createProxyMiddleware({
   target: config.services.userManagement,
   changeOrigin: true,
-  pathRewrite: (path, req) => {
-    console.log(`Rewriting signin path: ${path} → /signin`);
-    return '/signin';
-  },
+  pathRewrite: (path, req) => '/signin',
 }));
 */
-app.use('/auth/google', createProxyMiddleware({
+
+apiRouter.use('/auth/google', createProxyMiddleware({
   target: config.services.userManagement,
   changeOrigin: true,
 }));
 
-app.use('/auth/google/callback', createProxyMiddleware({
+apiRouter.use('/auth/google/callback', createProxyMiddleware({
   target: config.services.userManagement,
   changeOrigin: true,
 }));
 
-app.use('/users', createProxyMiddleware({
+apiRouter.use('/users', createProxyMiddleware({
   target: config.services.userManagement,
   changeOrigin: true,
-  pathRewrite: { '^/users': '' },
+  pathRewrite: { '^/api/users': '' },
 }));
 
-app.use('/student-courses', authenticateJWT, createProxyMiddleware({
+apiRouter.use('/student-courses', authenticateJWT, attachUserHeader, createProxyMiddleware({
   target: config.services.studentsCourses,
   changeOrigin: true,
-  pathRewrite: { '^/students-courses': '' },
+  pathRewrite: { '^/api/student-courses': '' },
 }));
 
-app.use('/grade-statistics', authenticateJWT, createProxyMiddleware({
+apiRouter.use('/grade-statistics', authenticateJWT, attachUserHeader, createProxyMiddleware({
   target: config.services.gradeStatistics,
   changeOrigin: true,
-  pathRewrite: { '^/grade-statistics': '' },
+  pathRewrite: { '^/api/grade-statistics': '' },
 }));
 
-app.use('/requests', authenticateJWT, createProxyMiddleware({
+apiRouter.use('/requests', authenticateJWT, attachUserHeader, createProxyMiddleware({
   target: config.services.requests,
   changeOrigin: true,
-  pathRewrite: { '^/requests': '' },
+  pathRewrite: { '^/api/requests': '' },
 }));
 
-app.use('/replies', authenticateJWT, createProxyMiddleware({
+apiRouter.use('/replies', authenticateJWT, attachUserHeader, createProxyMiddleware({
   target: config.services.replies,
   changeOrigin: true,
-  pathRewrite: { '^/replies': '' },
+  pathRewrite: { '^/api/replies': '' },
 }));
 
-app.use('/post-grades', createProxyMiddleware({
+apiRouter.use('/post-grades', createProxyMiddleware({
   target: config.services.postGrades,
   changeOrigin: true,
-  pathRewrite: { '^/post-grades': '' },
+  pathRewrite: { '^/api/post-grades': '' },
 }));
 
-app.use('/institution', authenticateJWT, createProxyMiddleware({
+apiRouter.use('/institution', authenticateJWT, attachUserHeader, createProxyMiddleware({
   target: config.services.institution,
   changeOrigin: true,
-  pathRewrite: { '^/institution': '' },
+  pathRewrite: { '^/api/institution': '' },
 }));
 
 // Default
-app.get('/', (req, res) => {
+apiRouter.get('/', (req, res) => {
   res.send('API Gateway is running');
 });
+
+app.use('/api', apiRouter);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
