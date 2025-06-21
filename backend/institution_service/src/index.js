@@ -5,15 +5,16 @@ const config = require('./config/config');
 const db = require('./database/db');
 const { initializeMessaging, closeMessaging } = require('./messaging/setup');
 const institutionRoutes = require('./routes/institutionRoutes');
+const attachUserFromHeader = require('./middleware/attachUser');
 
 // Initialize express app
 const app = express();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+app.use(attachUserFromHeader);
 
 // Routes
 app.use('/', institutionRoutes);

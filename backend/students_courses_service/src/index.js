@@ -2,6 +2,7 @@ const express = require('express');
 const config = require('./config/config');
 const gradesRoutes = require('./routes/grades');
 const { initializeMessaging } = require('./messaging/setup');
+const attachUserFromHeader = require('./middleware/attachUser');
 
 // Initialize Express app
 const app = express();
@@ -11,6 +12,7 @@ const PORT = config.server.port;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(attachUserFromHeader);
 
 // Enable CORS
 app.use((req, res, next) => {

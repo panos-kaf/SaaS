@@ -2,12 +2,14 @@ const express = require('express');
 const gradesRoutes = require('./routes/gradesRoutes');
 const { initializeMessaging } = require('./messaging/setup');
 const config = require('./config/config');
+const attachUserFromHeader = require('./middleware/attachUser');
 
 const app = express();
 // Using config for port
 const port = config.PORT || 3002;
 
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(attachUserFromHeader);
 
 // Routes
 app.use('/', gradesRoutes);

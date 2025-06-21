@@ -3,6 +3,7 @@ const cors = require('cors');
 const config = require('./config/config');
 const authRoutes = require('./routes/authRoutes');
 const { initializeMessaging } = require('./messaging/setup');
+const attachUserFromHeader = require('./middleware/attachUser');
 
 require('dotenv').config();
 const passport = require('passport');
@@ -18,6 +19,7 @@ app.use(passport.initialize());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(attachUserFromHeader);
 
 // Routes
 app.use('/', authRoutes);

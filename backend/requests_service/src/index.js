@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const config = require('./config/config');
 const requestsRoutes = require('./routes/requestsRoutes');
 const { initializeMessaging } = require('./messaging/setup');
+const attachUserFromHeader = require('./middleware/attachUser');
 
 // Load environment variables handled by dotenv in config
 
@@ -14,6 +15,7 @@ const PORT = config.PORT;
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(attachUserFromHeader);
 
 // Routes
 app.use(requestsRoutes);

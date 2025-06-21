@@ -5,6 +5,7 @@ const config = require('./config/config');
 const db = require('./database/db');
 const { initMessaging } = require('./messaging/setup');
 const repliesRoutes = require('./routes/repliesRoutes');
+const attachUserFromHeader = require('./middleware/attachUser');
 
 // Initialize express app
 const app = express();
@@ -13,6 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(attachUserFromHeader);
 
 // Routes
 app.use('/', repliesRoutes);
