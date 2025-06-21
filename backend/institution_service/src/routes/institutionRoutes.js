@@ -50,7 +50,7 @@ router.get(
 // Register courses for an institution
 // Only the institution manager or admin can register courses
 router.post(
-  '/register_courses/:institution_ID',
+  '/register-courses/:institution_ID',
   //authenticateJWT,
   //verifyInstitutionManager(getInstitutionManagerId),
   institutionController.registerCourses
@@ -59,7 +59,7 @@ router.post(
 // Sync existing courses by publishing course events
 // Only the institution manager or admin can sync courses
 router.post(
-  '/sync_courses/:institution_ID',
+  '/sync-courses/:institution_ID',
   //authenticateJWT,
   //verifyInstitutionManager(getInstitutionManagerId),
   institutionController.syncCourses

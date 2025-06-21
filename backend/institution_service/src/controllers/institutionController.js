@@ -32,6 +32,7 @@ class InstitutionController {
       }
 
       // Get manager user ID from authenticated user
+      console.log('Authenticate user:', req.user);
       const manager_user_id = req.user.id;
 
       // Check if institution already exists
