@@ -1,6 +1,6 @@
 const express = require('express');
 const userController = require('../controllers/userController');
-const { authenticateJWT } = require('../middleware/auth');
+//const { authenticateJWT } = require('../middleware/auth');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
@@ -27,7 +27,7 @@ router.post('/signup', userController.signUp); // alias for /add-user
  * @desc    Get current user profile
  * @access  Private
  */
-router.get('/profile', authenticateJWT, userController.getProfile);
+router.get('/profile', userController.getProfile);
 
 /** * @route   POST /signin/:institution_id?
  * @desc    Sign in user and get JWT

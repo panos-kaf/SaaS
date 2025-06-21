@@ -17,8 +17,9 @@ CREATE TABLE IF NOT EXISTS users_profile (
     user_service_id VARCHAR(255) UNIQUE NOT NULL, -- ID from the User Management service
     academic_id VARCHAR(100),
     first_name VARCHAR(50),
-    last_name VARCHAR(50),    email VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL, -- 'student', 'instructor', 'admin', etc.
+    last_name VARCHAR(50),    
+    email VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL, -- 'student', 'professor', 'admin', etc.
     institution_id INTEGER,
     department VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

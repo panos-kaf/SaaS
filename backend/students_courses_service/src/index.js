@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api', gradesRoutes);
+app.use('/', gradesRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

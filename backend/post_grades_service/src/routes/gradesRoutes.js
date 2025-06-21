@@ -1,7 +1,6 @@
 const express = require('express');
 const multer = require('multer');
 const gradesController = require('../controllers/gradesController');
-// const { authenticateJWT, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -51,37 +50,29 @@ const getSubmissionOwnerId = async (req) => {
   return result.rows[0].professor_id;
 };
 
-// POST /api/grade-submissions - Uploads a grades file and creates a submission record
+// POST /grade-submissions - Uploads a grades file and creates a submission record
 router.post(
   '/grade-submissions', 
-  // authenticateJWT,
-  // authorizeRoles(['professor', 'admin']), // Only professors and admins can upload grades
   upload.single('gradesFile'), 
   gradesController.uploadAndProcessGrades
 );
 
-// PUT /api/grade-submissions/:submission_id/file - Updates the file for a specific grade submission
+// PUT /grade-submissions/:submission_id/file - Updates the file for a specific grade submission
 router.put(
   '/grade-submissions/:submission_id/file', 
-  // authenticateJWT,
-  // authorizeRoles(['professor', 'admin']),
   upload.single('gradesFile'), 
   gradesController.updateGradeSubmissionFile
 );
 
-// DELETE /api/grade-submissions/:submission_id - Deletes a grade submission and its associated grades
+// DELETE /grade-submissions/:submission_id - Deletes a grade submission and its associated grades
 router.delete(
   '/grade-submissions/:submission_id', 
-  // authenticateJWT,
-  // authorizeRoles(['professor', 'admin']),
   gradesController.deleteGradeSubmission
 );
 
-// POST /api/grade-submissions/:submission_id/finalize - Finalizes a grade submission
+// POST /grade-submissions/:submission_id/finalize - Finalizes a grade submission
 router.post(
   '/grade-submissions/:submission_id/finalize', 
-  // authenticateJWT,
-  // authorizeRoles(['professor', 'admin']),
   gradesController.finalizeGradeSubmission
 );
 

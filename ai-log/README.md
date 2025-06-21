@@ -11,4 +11,6 @@
 - το αρχείο μεταδεδομένων
 - το σύνολο του διαλόγου (prompts & answers) με το εργαλείο
 
+Currently 5 Coding, 3 Design, 2 Architecture
+
 Δείτε το video: https://youtu.be/eUAjxCRNODU
