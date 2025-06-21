@@ -1,0 +1,435 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body, html, #root {
+  height: 100%;
+  background-color: #1a202c;
+  margin: 0;
+}
+
+.generic-text {
+  @apply text-gray-700;
+}
+
+/* #region Login Page */
+.login-container {
+  @apply flex items-center justify-center min-h-screen bg-cyan-200;
+}
+
+.form-container {
+  @apply w-full max-w-sm p-6 border rounded-lg shadow-md bg-slate-100 space-y-4;
+}
+
+.form-title {
+  @apply text-2xl font-bold text-center;
+}
+
+.form-input {
+  @apply w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.form-button {
+  @apply w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition;
+}
+/* #endregion */
+
+/* #region Navbar */
+.navbar {
+  @apply sticky top-0 z-50 w-full bg-gray-400 p-4 flex items-center space-x-4;
+}
+
+.navbar-title {
+  @apply font-bold text-lg;
+}
+
+.navbar-link {
+  @apply text-gray-600 hover:text-gray-900 transition-colors;
+}
+
+.navbar-link-active {
+  @apply text-sky-700 hover:text-sky-900 font-semibold;
+}
+
+.navbar-settings {
+  @apply text-sm text-gray-600 hover:text-gray-900 transition-colors;
+}
+
+.navbar-logout-button {
+  @apply ml-auto bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors;
+}
+
+.navbar-credits {
+  @apply flex items-center space-x-1 hover:opacity-80 transition-opacity
+}
+
+.coins {
+  @apply w-5 h-5 text-yellow-500;
+}
+
+.credits-text {
+  @apply text-base flex font-medium items-center text-gray-600 space-x-1 hover:text-gray-900 transition-opacity;
+}
+
+/* #endregion */
+
+/* #region Footer */
+.footer {
+  @apply w-full bg-transparent text-white text-center p-2 mt-4;
+}
+/* #endregion */
+
+/* #region Course Statistics */
+.statistics-container {
+  @apply p-6 text-white space-y-8;
+}
+
+.statistics-selectors {
+  @apply flex flex-col md:flex-row gap-4;
+}
+
+.statistics-select-wrapper {
+  @apply flex-1;
+}
+
+.statistics-label {
+  @apply block mb-1 text-sm text-gray-200;
+}
+
+.statistics-select {
+  @apply w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.statistics-section-title {
+  @apply text-xl font-bold mb-2 text-gray-100;
+}
+
+.statistics-table-container {
+  @apply overflow-auto border border-gray-700 rounded;
+}
+
+.statistics-table {
+  @apply min-w-full text-sm text-left border-collapse;
+}
+
+.statistics-thead {
+  @apply sticky top-0 bg-slate-700 z-10;
+}
+
+.statistics-th {
+  @apply px-4 py-2 border-b border-gray-700 text-white font-medium;
+}
+
+.statistics-tr {
+  @apply even:bg-gray-900 hover:bg-gray-800;
+}
+
+.statistics-td {
+  @apply px-4 py-2 border-b border-gray-700 text-white;
+}
+
+.statistics-placeholder {
+  @apply text-gray-400 italic;
+}
+
+.statistics-search {
+  @apply w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.statistics-course-list {
+  @apply max-h-44 overflow-y-auto border border-gray-700 rounded bg-slate-800 divide-y divide-gray-700;
+}
+
+.statistics-course-item {
+  @apply px-4 py-2 cursor-pointer hover:bg-slate-700 transition-colors;
+}
+
+.statistics-course-item-active {
+  @apply bg-blue-600 text-white font-semibold;
+}
+
+.statistics-table-scrollable {
+  @apply min-h-44 max-h-44 overflow-y-auto border border-gray-700 rounded bg-slate-800;
+}
+
+.statistics-header-clickable {
+  @apply cursor-pointer hover:text-blue-400;
+}
+
+.statistics-row-hover {
+  @apply hover:bg-slate-700 transition-colors cursor-pointer;
+}
+
+.statistics-row-selected {
+  @apply bg-blue-600 text-white;
+}
+/* #endregion */
+
+/* #region Grade Chart Sections */
+.statistics-chart-large {
+  @apply bg-slate-200 p-4 rounded-lg shadow-md;
+}
+
+.statistics-chart-small {
+  @apply bg-slate-100 p-4 rounded-lg shadow-md;
+}
+
+.statistics-subtitle {
+  @apply text-base font-semibold mb-2 text-gray-700;
+}
+
+.statistics-small-subtitle {
+  @apply text-xs font-semibold mb-2 text-gray-700;
+}
+
+.statistics-chart-small-horizontal {
+  @apply bg-slate-100 p-4 rounded-lg shadow-md;
+}
+
+.statistics-partial-chart-container {
+  @apply overflow-x-auto p-4 rounded-lg shadow-md;
+  background-color: #d1f5f0; /* optional for debugging */
+}
+
+.statistics-partial-chart-row {
+  @apply flex gap-4;
+  width: fit-content; /* use width: fit-content, not max-content for better browser compatibility */
+  min-width: 800px;    /* at least space for 4 charts */
+}
+
+.statistics-partial-chart-card {
+  @apply bg-slate-100 rounded-md shadow p-2 flex flex-col;
+  height: 180px;       /* fixed height to match container rows */
+  flex-shrink: 0;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.statistics-partial-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 charts per row */
+  gap: 0.5rem;
+  padding-right: 0;  /* or remove entirely */
+  padding-bottom: 0;
+
+  max-height: 360px;          /* Fixed height, enough for 2 rows */
+  overflow-y: auto;           /* Scroll vertically if more than 2 rows */
+  overflow-x: hidden;         /* Prevent sideways scrolling */
+  padding-right: 0.5rem;      /* Room for vertical scrollbar */
+}
+/* #endregion */
+
+/* #region Upload Grades Component */
+.upload-container {
+  @apply max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md mt-10;
+}
+
+.upload-header {
+  @apply text-2xl font-semibold mb-4 text-gray-800;
+}
+
+.upload-input {
+  @apply block w-full text-sm text-gray-700 border border-gray-300 rounded-md p-2 mb-4;
+}
+
+.upload-button {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md;
+}
+/* #endregion */
+
+/* #region Post Grades */
+.confirm-tile {
+  @apply max-w-xl mx-auto p-6 bg-gray-100 rounded-xl shadow-inner mt-6;
+}
+
+.confirm-header {
+  @apply text-xl font-semibold text-gray-700 mb-2;
+}
+
+.confirm-info {
+  @apply text-sm text-gray-600 mb-1;
+}
+
+.confirm-button {
+  @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md mt-4;
+}
+
+.cancel-button {
+  @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md mt-4;
+}
+/* #endregion */
+
+/* #region messages */
+.message-banner {
+  @apply max-w-xl mx-auto mt-4 px-4 py-3 rounded-md text-sm font-medium;
+}
+
+.message-success {
+  @apply bg-green-100 text-green-800 border border-green-200;
+}
+
+.message-cancel {
+  @apply bg-yellow-100 text-yellow-800 border border-yellow-200;
+}
+/* #endregion */
+
+/* #region User Management */
+.user-management-container {
+  @apply max-w-xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg;
+}
+
+.user-management-title {
+  @apply text-2xl font-semibold mb-6 text-neutral-700 text-center;
+}
+
+.user-management-mode-buttons {
+  @apply flex justify-center gap-4 mb-6;
+}
+
+.user-management-mode-button {
+  @apply px-4 py-2 border rounded-md transition-colors;
+
+  /* Base style for unselected */
+  @apply border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.user-management-mode-button.active {
+  /* Style for selected */
+  @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700;
+}
+.user-management-form {
+  @apply flex flex-col gap-4;
+}
+
+.user-management-label {
+  @apply flex flex-col text-sm font-medium text-gray-700;
+}
+
+.user-management-input {
+  @apply mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.user-management-select {
+  @apply mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.user-management-disabled {
+  @apply bg-gray-100 text-gray-500 cursor-not-allowed;
+}
+
+.user-management-button {
+  @apply mt-4 p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors;
+}
+/* #endregion */
+
+/* #region Credits Page */
+
+.credits-container {
+  @apply max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md;
+}
+
+.credits-title {
+  @apply text-2xl font-bold text-center mb-4 text-blue-700;
+}
+
+.credits-info {
+  @apply flex items-center justify-center gap-2 mb-6 relative;
+}
+
+.credits-balance {
+  @apply text-lg font-medium text-gray-700;
+}
+
+.credits-tooltip-wrapper {
+  @apply relative flex items-center;
+}
+
+.credits-info-icon {
+  @apply w-5 h-5 text-gray-400 hover:text-blue-500 cursor-pointer;
+}
+
+.question-mark-icon {
+  @apply w-6 h-6 flex items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold cursor-pointer hover:bg-blue-600;
+}
+
+.credits-tooltip {
+  @apply absolute left-full top-1/2 ml-2 px-3 py-2 text-sm text-white bg-gray-700 rounded shadow-lg transform -translate-y-1/2 hidden;
+  min-width: 160px;
+  white-space: normal; /* allow wrapping */
+  line-height: 1.3; /* better line spacing */
+  word-wrap: break-word; /* break long words if needed */
+}
+
+.credits-options {
+  @apply flex flex-wrap gap-4 justify-center mb-6;
+}
+
+.credits-option-button {
+  @apply px-6 py-4 text-base bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-center;
+}
+
+.credits-option-button.selected {
+  @apply bg-blue-600 text-white font-semibold;
+}
+
+.credits-button {
+  @apply block mx-auto mt-4 px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors;
+}
+/* #endregion */
+
+/* #region ReviewRequests Page */
+
+.reply-table-container {
+  @apply overflow-y-auto max-h-[700px] border rounded-md mt-6;
+}
+
+.reply-table {
+  @apply w-full text-left border-collapse;
+}
+
+.reply-table-header {
+  @apply sticky top-0 bg-slate-600 z-10 cursor-pointer select-none;
+}
+
+.reply-table-row {
+  @apply border-t hover:bg-slate-500 transition;
+}
+
+.reply-table-cell {
+  @apply p-3;
+}
+
+.reply-button {
+  @apply bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition;
+}
+
+.reply-window-container {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4;
+}
+
+.reply-window {
+  @apply bg-white rounded-2xl p-6 w-full max-w-3xl shadow-lg;
+}
+
+.reply-window-header {
+  @apply text-lg font-semibold mb-4;
+}
+
+.reply-request-box {
+  @apply bg-slate-50 border border-slate-300 rounded-md p-3 whitespace-pre-wrap text-base text-gray-500 h-full;
+}
+
+.reply-text {
+  @apply w-full p-2 border border-slate-300 rounded-md text-base text-black;
+}
+
+.reply-submit-button {
+  @apply bg-green-600 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-green-700;
+}
+
+.reply-cancel-button {
+  @apply bg-gray-400 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-gray-600;
+}
+/* #endregion */
+

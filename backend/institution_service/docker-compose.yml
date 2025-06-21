@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  institution_service_app:
+    build: .
+    container_name: institution_app
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+      - POSTGRES_HOST=institution_db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=institution_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - JWT_SECRET=jwt_secret
+    depends_on:
+      - institution_db
+      - rabbitmq
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - institution_network
+      - microservices_network
+
+  institution_db:
+    image: postgres:15
+    container_name: institution_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=institution_db
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres_institution_data:/var/lib/postgresql/data
+    networks:
+      - institution_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_institution
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_institution_data:/var/lib/rabbitmq
+    networks:
+      - institution_network
+      - microservices_network
+
+volumes:
+  postgres_institution_data:
+  rabbitmq_institution_data:
+
+networks:
+  institution_network:
+    driver: bridge
+  microservices_network:
+    external: true
