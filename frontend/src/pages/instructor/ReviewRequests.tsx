@@ -3,28 +3,26 @@ import { useMessage } from '../../components/Messages';
 import { config } from '../../config';
 
 interface ReplyRow {
-  id: string;
-  courseName: string;
-  examPeriod: string;
-  studentName: string;
-  requestMessage: string;
+  id: number;           
+  course_name: string;
+  exam_period: string;
+  student_name: string;
+  request_body: string;
 }
 
-type SortKey = keyof Pick<ReplyRow, 'courseName' | 'examPeriod' | 'studentName'>;
+type SortKey = keyof Pick<ReplyRow, 'course_name' | 'exam_period' | 'student_name' | 'request_body'>;
 
 const ReplyRequestsPage: React.FC = () => {
   const [data, setData] = useState<ReplyRow[]>([]);
-  const [sortKey, setSortKey] = useState<SortKey>('courseName');
+  const [sortKey, setSortKey] = useState<SortKey>('course_name');
   const [sortAsc, setSortAsc] = useState(true);
   const [activeReply, setActiveReply] = useState<ReplyRow | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const { showMessage } = useMessage();
 
-  // Fetch requests from backend on component mount
   useEffect(() => {
     const fetchRequests = async () => {
       const token = localStorage.getItem('token');
-      const role = localStorage.getItem('role');
       if (!token) {
         showMessage({ type: 'cancel', text: 'User not authenticated' });
         return;
@@ -33,7 +31,7 @@ const ReplyRequestsPage: React.FC = () => {
       try {
         const response = await fetch(`${config.apiUrl}/requests/view-requests`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -52,7 +50,6 @@ const ReplyRequestsPage: React.FC = () => {
     fetchRequests();
   }, []);
 
-  // Sorting handler
   const handleSort = (key: SortKey) => {
     const sorted = [...data].sort((a, b) => a[key].localeCompare(b[key]));
     if (!sortAsc) sorted.reverse();
@@ -61,7 +58,6 @@ const ReplyRequestsPage: React.FC = () => {
     setSortAsc(!sortAsc);
   };
 
-  // Handle sending a reply
   const handleReply = async () => {
     if (!activeReply) return;
 
@@ -77,15 +73,21 @@ const ReplyRequestsPage: React.FC = () => {
     }
 
     try {
-      // Χρήση backticks για το URL και το σωστό όνομα πεδίου για το reply
-      const response = await fetch(`http://localhost:3007/create-reply/${activeReply.id}`, {
+      // Παίρνουμε το value από το νέο grade input μέσα από ref ή DOM query
+      const newGradeInput = document.querySelector('input[placeholder="optional"]') as HTMLInputElement;
+      const newGrade = newGradeInput ? newGradeInput.value.trim() : '';
+
+      // Δημιουργούμε το reply_body που θα στείλουμε
+      const combinedReplyBody = `Reply: ${replyMessage.trim()}${newGrade ? `\nNew Grade: ${newGrade}` : ''}`;
+
+      const response = await fetch(`${config.apiUrl}/create-reply/${activeReply.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          reply_body: replyMessage,  // πρέπει να ταιριάζει με το backend
+          reply_body: combinedReplyBody,
         }),
       });
 
@@ -94,14 +96,14 @@ const ReplyRequestsPage: React.FC = () => {
         throw new Error(errorData.message || 'Failed to send reply');
       }
 
-      showMessage({ type: 'success', text: `Reply sent to ${activeReply.studentName}` });
+      showMessage({ type: 'success', text: `Reply sent to ${activeReply.student_name}` });
       setActiveReply(null);
       setReplyMessage('');
+      if (newGradeInput) newGradeInput.value = '';
     } catch (error: any) {
       showMessage({ type: 'cancel', text: error.message || 'Error sending reply' });
     }
   };
-
 
   return (
     <div className="reply-table-container">
@@ -114,14 +116,17 @@ const ReplyRequestsPage: React.FC = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="reply-table-header text-left">
-                <th className="p-2 cursor-pointer" onClick={() => handleSort('courseName')}>
-                  Course Name {sortKey === 'courseName' && (sortAsc ? '▲' : '▼')}
+                <th className="p-2 cursor-pointer" onClick={() => handleSort('course_name')}>
+                  Course Name {sortKey === 'course_name' && (sortAsc ? '▲' : '▼')}
                 </th>
-                <th className="p-2 cursor-pointer" onClick={() => handleSort('examPeriod')}>
-                  Exam Period {sortKey === 'examPeriod' && (sortAsc ? '▲' : '▼')}
+                <th className="p-2 cursor-pointer" onClick={() => handleSort('exam_period')}>
+                  Exam Period {sortKey === 'exam_period' && (sortAsc ? '▲' : '▼')}
                 </th>
-                <th className="p-2 cursor-pointer" onClick={() => handleSort('studentName')}>
-                  Student {sortKey === 'studentName' && (sortAsc ? '▲' : '▼')}
+                <th className="p-2 cursor-pointer" onClick={() => handleSort('student_name')}>
+                  Student {sortKey === 'student_name' && (sortAsc ? '▲' : '▼')}
+                </th>
+                <th className="p-2 cursor-pointer" onClick={() => handleSort('request_body')}>
+                  Message {sortKey === 'request_body' && (sortAsc ? '▲' : '▼')}
                 </th>
                 <th className="p-2">Action</th>
               </tr>
@@ -129,9 +134,10 @@ const ReplyRequestsPage: React.FC = () => {
             <tbody>
               {data.map((row) => (
                 <tr key={row.id} className="border-t">
-                  <td className="p-2">{row.courseName}</td>
-                  <td className="p-2">{row.examPeriod}</td>
-                  <td className="p-2">{row.studentName}</td>
+                  <td className="p-2">{row.course_name}</td>
+                  <td className="p-2">{row.exam_period}</td>
+                  <td className="p-2">{row.student_name}</td>
+                  <td className="p-2">{row.request_body}</td>
                   <td className="p-2">
                     <button
                       className="reply-button"
@@ -145,19 +151,18 @@ const ReplyRequestsPage: React.FC = () => {
             </tbody>
           </table>
 
-          {/* Reply Modal */}
           {activeReply && (
             <div className="reply-window-container">
               <div className="reply-window">
                 <h2 className="reply-window-header">
-                  Reply to {activeReply.studentName}
+                  Reply to {activeReply.student_name}
                 </h2>
 
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="w-full md:w-1/2">
                     <h3 className="text-sm font-semibold mb-1 text-gray-700">Student Request</h3>
                     <div className="reply-request-box">
-                      {activeReply.requestMessage}
+                      {activeReply.request_body}
                     </div>
                   </div>
 
@@ -180,7 +185,7 @@ const ReplyRequestsPage: React.FC = () => {
                         placeholder="optional"
                         className="reply-text"
                         min={0}
-                        max={30}
+                        max={10}
                       />
                     </div>
                   </div>
@@ -204,7 +209,6 @@ const ReplyRequestsPage: React.FC = () => {
       )}
     </div>
   );
-
 };
 
 export default ReplyRequestsPage;

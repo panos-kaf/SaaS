@@ -73,6 +73,7 @@ const getRequestsByUser = async (req, res) => {
     if (role === 'instructor') {
       result = await db.query(
         `SELECT
+            r.request_id,
             g.course_name,
             g.semester AS exam_period,
             r.request_body,
