@@ -433,3 +433,91 @@ body, html, #root {
 }
 /* #endregion */
 
+/* #region Institution Dashboard */
+
+.dashboard-container {
+    @apply flex flex-col gap-6 p-6;
+  }
+
+  .dashboard-panel {
+    @apply w-full rounded-2xl shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-5 transition hover:shadow-lg;
+  }
+
+  .dashboard-header {
+    @apply flex items-center justify-between mb-2;
+  }
+
+  .dashboard-title {
+    @apply text-xl font-semibold text-gray-800 dark:text-white;
+  }
+
+  .dashboard-content {
+    @apply text-sm text-gray-600 dark:text-gray-300;
+  }
+
+  .dashboard-button {
+    @apply bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition;
+  }
+
+  .courses-panel {
+    @apply border-l-4 border-blue-500;
+  }
+
+  .credits-panel {
+    @apply border-l-4 border-purple-500;
+  }
+
+  .instructors-panel {
+    @apply border-l-4 border-green-500;
+  }
+
+  .students-panel {
+    @apply border-l-4 border-yellow-500;
+  }
+
+  /* #region Modal */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50;
+  }
+
+  .modal-window {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-md p-6;
+  }
+
+  .modal-title {
+    @apply text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center;
+  }
+
+  .modal-form {
+    @apply flex flex-col gap-4;
+  }
+
+  .modal-label {
+    @apply flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-200;
+  }
+
+  .modal-input {
+    @apply  pl-8 px-3 py-2 border text-gray-800 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  .modal-actions {
+    @apply flex justify-end gap-3 pt-4;
+  }
+
+  .modal-button {
+    @apply px-4 py-2 rounded-md font-medium transition;
+  }
+
+  .modal-submit {
+    @apply bg-blue-600 text-white hover:bg-blue-700 modal-button;
+  }
+
+  .modal-cancel {
+    @apply bg-gray-300 text-gray-800 hover:bg-gray-400 modal-button;
+  }
+
+  .expansion-section {
+  @apply mt-4;
+  }
+  /* #endregion */
+
