@@ -44,7 +44,7 @@ router.delete(
 // View requests for a user
 router.get(
   '/view-requests',
-  // authenticateJWT, // <--- commented out for testing
+  authenticateJWT, // <--- commented out for testing
   requestsController.getRequestsByUser
 );
 

@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users_profile (
     academic_id VARCHAR(100),
     first_name VARCHAR(50),
     last_name VARCHAR(50),    email VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL, -- 'student', 'professor', 'admin', etc.
+    role VARCHAR(50) NOT NULL, -- 'student', 'instructor', 'admin', etc.
     institution_id INTEGER,
     department VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

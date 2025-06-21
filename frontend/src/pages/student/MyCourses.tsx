@@ -1,10 +1,18 @@
 import React, { useState } from "react";
+import { config } from '../../config';
+
+const showMessage = ({ type, text }: { type: string; text: string }) => {
+  alert(`${type.toUpperCase()}: ${text}`);
+};
+
 
 interface Course {
   id: number;
   courseName: string;
   examPeriod: string;
   gradingStatus: string;
+  gradeID: number;
+  profID: number;
 }
 
 const MyCourses = () => {
@@ -14,18 +22,24 @@ const MyCourses = () => {
       courseName: "physics",
       examPeriod: "spring 2025",
       gradingStatus: "open",
+      gradeID: 5,
+      profID: 1
     },
     {
       id: 2,
       courseName: "software",
       examPeriod: "fall 2024",
-      gradingStatus: "graded",
+      gradingStatus: "open",
+      gradeID: 5,
+      profID: 2
     },
     {
       id: 3,
       courseName: "mathematics",
       examPeriod: "fall 2024",
       gradingStatus: "closed",
+      gradeID: 3,
+      profID: 3
     },
   ];
 
@@ -54,13 +68,45 @@ const MyCourses = () => {
     setViewStatusCourse(null);
   };
 
-  const handleSubmitReview = () => {
-    if (selectedCourse && reviewMessage.trim() !== "") {
-      alert(`Review submitted for ${selectedCourse.courseName}: ${reviewMessage}`);
-      setReviewMessage("");
-      setSelectedCourse(null);
+  const handleSubmitReview = async () => {
+    if (!selectedCourse || reviewMessage.trim() === "") {
+      showMessage({ type: "cancel", text: "Review message is required." });
+      return;
+    }
+
+    const courseID = selectedCourse.id;   // από props ή state
+    const gradeID = selectedCourse.gradeID;     // μοναδικό ID βαθμού
+    const profID = selectedCourse.profID;       // καθηγητής που ανήκει ο βαθμός
+
+    try {
+      const response = await fetch(`http://localhost:3005/post-request/${courseID}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("token") || ""}`
+        },
+        body: JSON.stringify({
+          requestBody: reviewMessage,
+          gradeID,
+          profID
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        showMessage({ type: 'success', text: 'Review request submitted successfully!' });
+        setReviewMessage("");
+        setSelectedCourse(null);
+      } else {
+        showMessage({ type: 'cancel', text: result.error || 'Failed to submit review request.' });
+      }
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      showMessage({ type: 'cancel', text: 'An error occurred while submitting the review.' });
     }
   };
+
 
   return (
     <div className="p-6 text-white">

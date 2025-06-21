@@ -15,16 +15,19 @@ const authenticateJWT = (req, res, next) => {
   }
 
   const token = authHeader.split(' ')[1];
+  console.log('Token extracted:', token);
 
   jwt.verify(token, config.jwt.secret, (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
 
-    // Store user information from token for use in route handlers
     req.user = user;
+    console.log('Decoded JWT user:', user); // Αυτό θα πρέπει να τυπώνει id, role, username κλπ.
+    console.log("User's role: " + req.user.role)
     next();
   });
+
 };
 
 /**

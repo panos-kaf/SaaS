@@ -64,32 +64,40 @@ const deleteRequest = async (req, res) => {
 
 // Retrieve all requests for a specific user (student or professor)
 const getRequestsByUser = async (req, res) => {
-  // Use dummy user id and role if req.user is undefined (for testing without auth)
   const userID = req.user && req.user.id ? req.user.id : 1;
   const role = req.user && req.user.role ? req.user.role : 'student';
+  console.log('Role from token:', role);
 
   try {
     let result;
-
-    if (role === 'professor') {
+    if (role === 'instructor') {
       result = await db.query(
-        'SELECT * FROM requests WHERE prof_id = $1 ORDER BY timestamp DESC',
+        `SELECT
+            g.course_name,
+            g.semester AS exam_period,
+            r.request_body,
+            u.first_name || ' ' || u.last_name AS student_name
+          FROM requests r
+          JOIN grades g ON r.grade_id = g.grade_id
+          JOIN users_profile u ON r.owner_id = u.user_service_id
+          WHERE r.prof_id = $1
+          ORDER BY r.timestamp DESC;`,
         [userID]
       );
     } else {
-      // Default to student role
       result = await db.query(
         'SELECT * FROM requests WHERE owner_id = $1 ORDER BY timestamp DESC',
         [userID]
       );
     }
-
     return res.status(200).json({ requests: result.rows });
   } catch (error) {
     console.error('Error retrieving requests:', error);
-    return res.status(500).json({ error: 'Failed to retrieve requests' });
+    return res.status(500).json({ error: 'Failed to retrieve requests', detail: error.message });
   }
 };
+
+
 
 // Close a request
 const closeRequest = async (req, res) => {
