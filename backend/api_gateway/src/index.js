@@ -7,6 +7,7 @@ const app = express();
 
 // Proxy rules (you can adjust paths based on frontend requests)
 
+/*
 // Public routes BEFORE /users authentication
 app.use('/signup', createProxyMiddleware({
   target: config.services.userManagement,
@@ -25,8 +26,9 @@ app.use('/signin', createProxyMiddleware({
     return '/signin';
   },
 }));
+*/
 
-app.use('/users', authenticateJWT, createProxyMiddleware({
+app.use('/users', createProxyMiddleware({
   target: config.services.userManagement,
   changeOrigin: true,
   pathRewrite: { '^/users': '' },
@@ -62,10 +64,10 @@ app.use('/post-grades', authenticateJWT, createProxyMiddleware({
   pathRewrite: { '^/post-grades': '' },
 }));
 
-app.use('/institutions', authenticateJWT, createProxyMiddleware({
+app.use('/institution', authenticateJWT, createProxyMiddleware({
   target: config.services.institution,
   changeOrigin: true,
-  pathRewrite: { '^/institutions': '' },
+  pathRewrite: { '^/institution': '' },
 }));
 
 // Default

@@ -8,10 +8,13 @@ const config = require('../config/config');
  * @param {Function} next - Express next middleware function
  */
 const authenticateJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-  //console.log('Auth header received:', authHeader);
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Authentication token is missing' });
+  }
 
-  const token = req.headers['x-auth-token'] || req.headers.authorization;
+  const token = authHeader.split(' ')[1];
 
   jwt.verify(token, config.jwt.secret, (err, user) => {
     if (err) {
