@@ -2,8 +2,11 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const config = require('./config/config');
 const { authenticateJWT, authorizeRoles } = require('./middleware/auth');
+const cors = require('cors');
 
 const app = express();
+
+app.use(cors());
 
 // Proxy rules (you can adjust paths based on frontend requests)
 
@@ -43,7 +46,7 @@ app.use('/users', createProxyMiddleware({
   pathRewrite: { '^/users': '' },
 }));
 
-app.use('/students-courses', authenticateJWT, createProxyMiddleware({
+app.use('/student-courses', authenticateJWT, createProxyMiddleware({
   target: config.services.studentsCourses,
   changeOrigin: true,
   pathRewrite: { '^/students-courses': '' },
@@ -67,7 +70,7 @@ app.use('/replies', authenticateJWT, createProxyMiddleware({
   pathRewrite: { '^/replies': '' },
 }));
 
-app.use('/post-grades', authenticateJWT, createProxyMiddleware({
+app.use('/post-grades', createProxyMiddleware({
   target: config.services.postGrades,
   changeOrigin: true,
   pathRewrite: { '^/post-grades': '' },
