@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS institution_courses (
     department VARCHAR(100),
     semester VARCHAR(20),
     academic_year VARCHAR(10),
-    professor_id INTEGER,
+    professor_id INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS grade_submissions (
 CREATE TABLE IF NOT EXISTS grades (
     grades_id SERIAL PRIMARY KEY,
     course_id INTEGER NOT NULL,        -- Course ID for better organization and statistics (references institution_courses)
-    prof_id VARCHAR(255) NOT NULL,          -- ID of the professor from another service
+    prof_id INTEGER NOT NULL,          -- ID of the professor from another service
     student_academic_number VARCHAR(100) NOT NULL, -- Academic number of the student
     student_name VARCHAR(255) NOT NULL,
     student_email VARCHAR(255),
