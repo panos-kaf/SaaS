@@ -16,7 +16,7 @@ services: {
 },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'gateway_secret',
+    secret: process.env.JWT_SECRET || 'jwt_secret',
     expiresIn: process.env.JWT_EXPIRATION || '24h',
   }
 };
