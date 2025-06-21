@@ -11,7 +11,7 @@ passport.use(
     {
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:3000/users/auth/google/callback',
+      callbackURL: 'http://localhost:3000/api/users/auth/google/callback',
     },
     (accessToken, refreshToken, profile, done) => {
       // Εδώ μπορείς να δημιουργήσεις ή να βρεις χρήστη

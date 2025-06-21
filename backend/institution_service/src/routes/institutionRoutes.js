@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const institutionController = require('../controllers/institutionController');
-const { authenticateJWT, authorizeRoles, verifyInstitutionManager } = require('../middleware/auth');
+//const { authenticateJWT, authorizeRoles, verifyInstitutionManager } = require('../middleware/auth');
 
 // Function to get institution manager ID for ownership verification
 const getInstitutionManagerId = async (req) => {
@@ -24,8 +24,8 @@ const getInstitutionManagerId = async (req) => {
 // Only authenticated institution representatives can enroll
 router.post(
   '/add-inst/',
-  authenticateJWT,
-  authorizeRoles(['institution_manager', 'admin']),
+  //authenticateJWT,
+  //authorizeRoles(['institution', 'institution_manager', 'admin']),
   institutionController.enrollInstitution
 );
 
@@ -33,8 +33,8 @@ router.post(
 // Only the institution manager or admin can add credits
 router.post(
   '/add-creds/:institution_ID',
-  authenticateJWT,
-  verifyInstitutionManager(getInstitutionManagerId),
+  //authenticateJWT,
+  //verifyInstitutionManager(getInstitutionManagerId),
   institutionController.addCredits
 );
 
@@ -42,8 +42,8 @@ router.post(
 // Only the institution manager or admin can view credits
 router.get(
   '/view-creds/:institution_ID',
-  authenticateJWT,
-  verifyInstitutionManager(getInstitutionManagerId),
+  //authenticateJWT,
+  //verifyInstitutionManager(getInstitutionManagerId),
   institutionController.viewCredits
 );
 
@@ -51,8 +51,8 @@ router.get(
 // Only the institution manager or admin can register courses
 router.post(
   '/register_courses/:institution_ID',
-  authenticateJWT,
-  verifyInstitutionManager(getInstitutionManagerId),
+  //authenticateJWT,
+  //verifyInstitutionManager(getInstitutionManagerId),
   institutionController.registerCourses
 );
 
@@ -60,8 +60,8 @@ router.post(
 // Only the institution manager or admin can sync courses
 router.post(
   '/sync_courses/:institution_ID',
-  authenticateJWT,
-  verifyInstitutionManager(getInstitutionManagerId),
+  //authenticateJWT,
+  //verifyInstitutionManager(getInstitutionManagerId),
   institutionController.syncCourses
 );
 

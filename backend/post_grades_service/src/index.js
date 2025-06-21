@@ -9,8 +9,8 @@ const port = config.PORT || 3002;
 
 app.use(express.json()); // Middleware to parse JSON bodies
 
-// All routes for this service will be prefixed with /api
-app.use('/api', gradesRoutes);
+// Routes
+app.use('/', gradesRoutes);
 
 // Initialize the messaging system
 initializeMessaging().catch(err => {

@@ -1,6 +1,6 @@
 const express = require('express');
 const repliesController = require('../controllers/repliesController');
-const { authenticateJWT, authorizeRoles, verifyResourceOwnership } = require('../middleware/auth');
+const { verifyResourceOwnership } = require('../middleware/auth');
 const router = express.Router();
 
 // Get reply owner ID for ownership verification
@@ -30,7 +30,6 @@ const getReplyOwnerId = async (req) => {
 // Any authenticated user can create a reply
 router.post(
   '/create-reply/:requestID',
-  authenticateJWT,
   repliesController.createReply
 );
 
@@ -38,7 +37,6 @@ router.post(
 // Only the owner of the reply or admin can delete it
 router.delete(
   '/delete-reply/:replyID',
-  authenticateJWT,
   verifyResourceOwnership(getReplyOwnerId),
   repliesController.deleteReply
 );
@@ -47,7 +45,6 @@ router.delete(
 // Anyone who can view the request can view the replies
 router.get(
   '/view-replies/:requestID',
-  authenticateJWT,
   repliesController.getRepliesForRequest
 );
 
