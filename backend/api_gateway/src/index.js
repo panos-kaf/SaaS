@@ -27,6 +27,15 @@ app.use('/signin', createProxyMiddleware({
   },
 }));
 */
+app.use('/auth/google', createProxyMiddleware({
+  target: config.services.userManagement,
+  changeOrigin: true,
+}));
+
+app.use('/auth/google/callback', createProxyMiddleware({
+  target: config.services.userManagement,
+  changeOrigin: true,
+}));
 
 app.use('/users', createProxyMiddleware({
   target: config.services.userManagement,

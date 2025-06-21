@@ -4,8 +4,15 @@ const config = require('./config/config');
 const authRoutes = require('./routes/authRoutes');
 const { initializeMessaging } = require('./messaging/setup');
 
+require('dotenv').config();
+const passport = require('passport');
+require('./passport'); // φορτώνει τη στρατηγική Google
+
 // Initialize express app
 const app = express();
+
+app.use(passport.initialize());
+
 
 // Middleware
 app.use(cors());

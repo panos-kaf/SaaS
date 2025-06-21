@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMessage } from '../components/Messages';
+import { useLocation } from 'react-router-dom';
 import '../global.css';
 import { config } from '../config';
 
@@ -20,7 +21,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   try {
-    const response = await fetch(`http://localhost:3000/users/signin`, {
+    const response = await fetch(`${config.apiUrl}/users/signin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,8 +64,9 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
 
   const handleGoogleLogin = () => {
-    showMessage({type: 'cancel', text: 'Google login not implemented yet'});
+    window.location.href = `${config.apiUrl}/users/auth/google`;
   };
+
 
 const [showSignup, setShowSignup] = useState(false);
 const [signupEmail, setSignupEmail] = useState('');
@@ -72,11 +74,26 @@ const [signupUsername, setSignupUsername] = useState('');
 const [signupPassword, setSignupPassword] = useState('');
 const [signupRole, setSignupRole] = useState('student');
 
+const location = useLocation();
+
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const error = params.get('error');
+
+  if (error === 'user_not_found') {
+    showMessage({ type: 'cancel', text: 'Ο Google λογαριασμός δεν είναι εγγεγραμμένος. Κάνε εγγραφή πρώτα!' });
+
+    // Καθάρισε το query param από το URL
+    window.history.replaceState({}, document.title, '/login');
+  }
+}, [location.search]);
+
+
 const handleSignup = async (e: React.FormEvent) => {
   e.preventDefault();
 
   try {
-    const response = await fetch(`http://localhost:3007/add-user`, {
+    const response = await fetch(`${config.apiUrl}/users/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
