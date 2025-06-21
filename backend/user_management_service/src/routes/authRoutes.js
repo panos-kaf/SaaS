@@ -10,6 +10,7 @@ const router = express.Router();
  * @access  Public
  */
 router.post('/add-user', userController.signUp);
+router.post('/signup', userController.signUp); // alias for /add-user
 
 // /**
 //  * @route   POST /add-creds/:institution_id
