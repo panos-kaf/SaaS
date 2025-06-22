@@ -98,8 +98,8 @@ useEffect(() => {
 const handleSignup = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  if (!signupUsername || !signupPassword || !signupEmail) {
-    showMessage({ type: 'cancel', text: 'Please fill in your username, email, and password.' });
+  if (!signupUsername || !signupPassword || !signupEmail || !signupAcademicId || !signupFirstName || !signupLastName || !signupDepartment || !signupInstitutionId) {
+    showMessage({ type: 'cancel', text: 'Please fill in all fields.' });
     return;
   }
 
