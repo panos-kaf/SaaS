@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS institution_courses (
 CREATE TABLE IF NOT EXISTS grade_submissions (
     submission_id SERIAL PRIMARY KEY,
     owner_user_service_id VARCHAR(255) NOT NULL,
-    course_id INTEGER NOT NULL,        -- Course ID to track which course this submission belongs to (references institution_courses)
     file_path VARCHAR(255) NOT NULL,
     finalized BOOLEAN DEFAULT FALSE NOT NULL, -- Indicates if the submission and its grades are final
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -52,11 +51,7 @@ CREATE TABLE IF NOT EXISTS grade_submissions (
     CONSTRAINT fk_owner_user_service
         FOREIGN KEY(owner_user_service_id)
         REFERENCES users_profile(user_service_id)
-        ON DELETE RESTRICT, -- Or consider ON DELETE SET NULL if owner can be disassociated
-    CONSTRAINT fk_course_submission
-        FOREIGN KEY(course_id)
-        REFERENCES institution_courses(course_id)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT -- Or consider ON DELETE SET NULL if owner can be disassociated
 );
 
 CREATE TABLE IF NOT EXISTS grades (

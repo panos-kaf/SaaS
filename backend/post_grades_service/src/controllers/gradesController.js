@@ -243,7 +243,7 @@ exports.uploadAndProcessGrades = async (req, res) => {
     if (req.user && req.user.id) {
         owner_user_service_id = req.user.id;
     } else {
-        owner_user_service_id = 'default_id'; // Βάλε εδώ το user_service_id που θες για testing
+        owner_user_service_id = '2'; // Βάλε εδώ το user_service_id που θες για testing
     }
 
     if (!file) {

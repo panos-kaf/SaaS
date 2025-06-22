@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS courses (
 -- Student-Course registrations
 CREATE TABLE IF NOT EXISTS student_courses (
   registration_id SERIAL PRIMARY KEY,
-  user_profile_id INTEGER NOT NULL REFERENCES users_profile(id) ON DELETE CASCADE,
+  user_profile_id INTEGER NOT NULL REFERENCES users_profile(user_profile_id) ON DELETE CASCADE,
   course_id INTEGER NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
   registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_profile_id, course_id)
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS student_courses (
 -- Grades table (imported from post_grades_service)
 CREATE TABLE IF NOT EXISTS grades (
   grade_id SERIAL PRIMARY KEY,
-  user_profile_id INTEGER NOT NULL REFERENCES users_profile(id) ON DELETE CASCADE,
+  user_profile_id INTEGER NOT NULL REFERENCES users_profile(user_profile_id) ON DELETE CASCADE,
   course_id INTEGER NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
   grade DECIMAL(5,2) NOT NULL,
   grade_scale VARCHAR(20),  -- e.g., '0-10', 'A-F'

@@ -85,6 +85,8 @@ class MessagingSubscriber {
    * @param {Function} consumerSetupFn - The function to set up the consumer
    */
   async setupExchangeAndQueue(exchange, exchangeType, queueName, consumerSetupFn) {
+    console.log(`Setting up exchange: ${exchange}, queue: ${queueName}`);
+    
     // Assert the exchange - ensures the exchange exists
     await this.channel.assertExchange(exchange, exchangeType, {
       durable: true // Exchange will survive broker restart
@@ -102,6 +104,7 @@ class MessagingSubscriber {
 
     // Set up consumer
     await consumerSetupFn(q.queue);
+    console.log(`Consumer setup completed for queue: ${q.queue}`);
   }
 
   /**
@@ -124,11 +127,13 @@ class MessagingSubscriber {
    */
   async setupGradesConsumer(queue) {
     try {
+      console.log(`Setting up grades consumer for queue: ${queue}`);
       await this.channel.consume(queue, async (msg) => {
         if (msg !== null) {
           try {
             const content = JSON.parse(msg.content.toString());
-            console.log(`Received grade message for student: ${content.student_academic_number}, course: ${content.course_code}`);
+            console.log(`[GRADES] Received grade message for student: ${content.student_academic_number}, course: ${content.course_code}`);
+            console.log(`[GRADES] Full message content:`, content);
             
             // Process the grade message
             await this.processGradeMessage(content);
@@ -142,6 +147,7 @@ class MessagingSubscriber {
           }
         }
       });
+      console.log(`Grades consumer setup completed for queue: ${queue}`);
     } catch (error) {
       console.error('Error setting up grades consumer:', error);
     }
@@ -255,16 +261,18 @@ class MessagingSubscriber {
    */
   async processGradeMessage(grade) {
     try {
+      console.log(`[GRADES] Processing grade message for student: ${grade.student_academic_number}, course: ${grade.course_code}`);
+      
       // Save the grade to the database
       const result = await saveGradeFromQueue(grade);
       
       if (result.inserted) {
-        console.log(`Inserted new grade for student ${grade.student_academic_number}, course ${grade.course_code}`);
+        console.log(`[GRADES] ✅ Inserted new grade for student ${grade.student_academic_number}, course ${grade.course_code}`);
       } else if (result.updated) {
-        console.log(`Updated existing grade for student ${grade.student_academic_number}, course ${grade.course_code}`);
+        console.log(`[GRADES] ✅ Updated existing grade for student ${grade.student_academic_number}, course ${grade.course_code}`);
       }
     } catch (error) {
-      console.error('Error processing grade message:', error);
+      console.error('[GRADES] ❌ Error processing grade message:', error);
       throw error;
     }
   }

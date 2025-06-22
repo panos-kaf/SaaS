@@ -38,7 +38,7 @@ async function addCourseForUser(userProfileId, courseId) {
     }
     
     // Check if the user profile exists
-    const userCheck = await db.query('SELECT id FROM users_profile WHERE id = $1', [userProfileId]);
+    const userCheck = await db.query('SELECT user_profile_id FROM users_profile WHERE user_profile_id = $1', [userProfileId]);
     
     if (userCheck.rows.length === 0) {
       throw new Error('User not found');
@@ -85,7 +85,7 @@ async function getGradeForUserCourse(userProfileId, courseId) {
              CONCAT(up.first_name, ' ', up.last_name) as student_name, up.academic_id as academic_number
       FROM grades g
       JOIN courses c ON g.course_id = c.course_id
-      JOIN users_profile up ON g.user_profile_id = up.id
+      JOIN users_profile up ON g.user_profile_id = up.user_profile_id
       WHERE g.user_profile_id = $1 AND g.course_id = $2
       ORDER BY g.submission_date DESC
       LIMIT 1
@@ -115,7 +115,7 @@ async function saveGradeFromQueue(gradeData) {
     try {
       // First, check if the student exists by academic_id
       let userResult = await db.query(`
-        SELECT id, user_credential_id
+        SELECT user_profile_id, user_service_id
         FROM users_profile
         WHERE academic_id = $1
       `, [gradeData.student_academic_number]);
@@ -124,29 +124,31 @@ async function saveGradeFromQueue(gradeData) {
       
       if (userResult.rows.length === 0) {
         // User profile doesn't exist, create it
-        // We need to assume some credential ID from the user_management_service
-        // In production, this would come from the message or be looked up
-        const assumedCredentialId = Math.floor(Math.random() * 10000); // Just for demo
+        // Use academic_id as a unique identifier for user_service_id for now
+        const uniqueUserServiceId = `student_${gradeData.student_academic_number}_${Date.now()}`;
         
         userResult = await db.query(`
           INSERT INTO users_profile (
-            user_credential_id, academic_id, first_name, last_name, role, department
+            user_service_id, academic_id, first_name, last_name, email, role, department
           ) VALUES (
-            $1, $2, $3, $4, $5, $6
-          ) RETURNING id`,
+            $1, $2, $3, $4, $5, $6, $7
+          ) RETURNING user_profile_id`,
           [
-            assumedCredentialId, // This would be the actual ID from user_management_service
+            uniqueUserServiceId, // Unique identifier
             gradeData.student_academic_number,
             gradeData.student_name ? gradeData.student_name.split(' ')[0] : '',
             gradeData.student_name ? gradeData.student_name.split(' ').slice(1).join(' ') : '',
+            `${gradeData.student_academic_number}@student.edu`, // Generate a temporary email
             'student',
             gradeData.department || ''
           ]
         );
         
-        userProfileId = userResult.rows[0].id;
+        userProfileId = userResult.rows[0].user_profile_id;
+        console.log(`Created new user profile with ID: ${userProfileId}`);
       } else {
-        userProfileId = userResult.rows[0].id;
+        userProfileId = userResult.rows[0].user_profile_id;
+        console.log(`Found existing user profile with ID: ${userProfileId}`);
       }
       
       // Ensure the course exists
@@ -175,19 +177,21 @@ async function saveGradeFromQueue(gradeData) {
       }
       
       courseId = courseResult.rows[0].course_id;
+      console.log(`Using course ID: ${courseId}`);
       
       // Check if the user is registered for this course
+      console.log(`Checking registration for user ${userProfileId} and course ${courseId}`);
       const registrationCheck = await db.query(
         'SELECT registration_id FROM student_courses WHERE user_profile_id = $1 AND course_id = $2',
         [userProfileId, courseId]
-      );
-      
-      if (registrationCheck.rows.length === 0) {
+      );      if (registrationCheck.rows.length === 0) {
         // Automatically register the student for this course
+        console.log(`Registering user ${userProfileId} for course ${courseId}`);
         await db.query(
           'INSERT INTO student_courses (user_profile_id, course_id) VALUES ($1, $2)',
           [userProfileId, courseId]
         );
+        console.log(`Successfully registered user ${userProfileId} for course ${courseId}`);
       }
       
       // Check if this grade already exists
@@ -286,10 +290,10 @@ async function saveUserFromQueue(userData) {
     await db.query('BEGIN');
     
     try {
-      // Check if user profile already exists - either by academic_id or by user_credential_id
+      // Check if user profile already exists - either by academic_id or by user_service_id
       let userProfileResult = await db.query(
-        'SELECT id FROM users_profile WHERE academic_id = $1 OR user_credential_id = $2',
-        [userData.academic_id, userData.user_credential_id]
+        'SELECT user_profile_id FROM users_profile WHERE academic_id = $1 OR user_service_id = $2',
+        [userData.academic_id, userData.user_service_id]
       );
       
       let userProfileId;
@@ -298,22 +302,23 @@ async function saveUserFromQueue(userData) {
         // User profile doesn't exist, create it
         userProfileResult = await db.query(`
           INSERT INTO users_profile (
-            user_credential_id, academic_id, first_name, last_name, role, institution_id, department
+            user_service_id, academic_id, first_name, last_name, email, role, institution_id, department
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7
-          ) RETURNING id`,
+            $1, $2, $3, $4, $5, $6, $7, $8
+          ) RETURNING user_profile_id`,
           [
-            userData.user_credential_id,
+            userData.user_service_id,
             userData.academic_id,
             userData.first_name,
             userData.last_name,
+            userData.email || '',
             userData.role || 'student',
             userData.institution_id || null,
             userData.department || ''
           ]
         );
         
-        userProfileId = userProfileResult.rows[0].id;
+        userProfileId = userProfileResult.rows[0].user_profile_id;
         
         await db.query('COMMIT');
         
@@ -323,7 +328,7 @@ async function saveUserFromQueue(userData) {
         };
       } else {
         // User profile exists, update it
-        userProfileId = userProfileResult.rows[0].id;
+        userProfileId = userProfileResult.rows[0].user_profile_id;
         
         // Update profile
         await db.query(`
@@ -335,7 +340,7 @@ async function saveUserFromQueue(userData) {
             institution_id = COALESCE($5, institution_id),
             department = COALESCE($6, department),
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $7`,
+          WHERE user_profile_id = $7`,
           [
             userData.academic_id,
             userData.first_name,

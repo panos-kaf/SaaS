@@ -103,9 +103,11 @@ class GradesSubscriber {
             if (content.event === 'grade_submission_finalized') {
               console.log(`Received grade submission finalization message: ${content.submission_id}`);
               // Currently we don't need special handling for finalization events
-            } else if (content.grades_id) {
-              // This is a grade message
-              console.log(`Received grade message for grades_id: ${content.grades_id}`);
+            } else if (content.id || content.grades_id || content.student_academic_number) {
+              // This is a grade message - handle different field patterns
+              // Some messages have ID fields, others are identified by having grade data
+              const gradeId = content.id || content.grades_id || 'unknown';
+              console.log(`Received grade message for grade ID: ${gradeId}`);
               // Process the grade message
               await this.processGradeMessage(content);
             } else {
@@ -133,12 +135,31 @@ class GradesSubscriber {
    */
   async processGradeMessage(gradeData) {
     try {
-      console.log(`Processing grade data for grades_id: ${gradeData.grades_id}`);
+      // Handle both 'id' and 'grades_id' field names from the message
+      let gradeServiceId = gradeData.id || gradeData.grades_id;
+      
+      // If no explicit ID, create a composite key for identification
+      if (!gradeServiceId) {
+        // Create a pseudo-ID based on student + course + submission for duplicate detection
+        gradeServiceId = `${gradeData.student_academic_number}-${gradeData.course_code}-${gradeData.submission_id || 'nosub'}`;
+        console.log(`No explicit grade ID found, using composite identifier: ${gradeServiceId}`);
+      } else {
+        console.log(`Processing grade data for grade service ID: ${gradeServiceId}`);
+      }
+      
+      // Validate required fields
+      const requiredFields = ['student_academic_number', 'student_name', 'semester', 'course_name', 'course_code', 'grade_scale', 'grade'];
+      for (const field of requiredFields) {
+        if (!gradeData[field]) {
+          console.error(`Missing required field '${field}' in grade message:`, gradeData);
+          return;
+        }
+      }
       
       // Check if grade already exists in our database
       const gradeCheck = await db.query(
         'SELECT * FROM grades WHERE grades_service_id = $1',
-        [gradeData.grades_id]
+        [gradeServiceId.toString()]
       );
       
       if (gradeCheck.rows.length === 0) {
@@ -146,25 +167,26 @@ class GradesSubscriber {
         await db.query(
           `INSERT INTO grades (
             grades_service_id, course_id, prof_id, student_academic_number, 
-            student_name, student_email, semester, course_name, 
+            student_name, student_email, semester, academic_year, course_name, 
             course_code, grade_scale, grade, submission_id
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
           [
-            gradeData.grades_id,
-            gradeData.course_id,
-            gradeData.prof_id,
+            gradeServiceId.toString(),
+            gradeData.course_id || null,
+            gradeData.prof_id || gradeData.professor_id || null,
             gradeData.student_academic_number,
             gradeData.student_name,
             gradeData.student_email || null,
             gradeData.semester,
+            gradeData.academic_year || null,
             gradeData.course_name,
             gradeData.course_code,
             gradeData.grade_scale,
-            gradeData.grade,
-            gradeData.submission_id
+            gradeData.grade.toString(),
+            gradeData.submission_id || null
           ]
         );
-        console.log(`Inserted new grade for grades_id: ${gradeData.grades_id}`);
+        console.log(`Inserted new grade for grade service ID: ${gradeServiceId}`);
       } else {
         // Update existing grade
         await db.query(
@@ -175,32 +197,35 @@ class GradesSubscriber {
             student_name = $5,
             student_email = $6,
             semester = $7,
-            course_name = $8,
-            course_code = $9,
-            grade_scale = $10,
-            grade = $11,
-            submission_id = $12,
+            academic_year = $8,
+            course_name = $9,
+            course_code = $10,
+            grade_scale = $11,
+            grade = $12,
+            submission_id = $13,
             updated_at = CURRENT_TIMESTAMP
           WHERE grades_service_id = $1`,
           [
-            gradeData.grades_id,
-            gradeData.course_id,
-            gradeData.prof_id,
+            gradeServiceId.toString(),
+            gradeData.course_id || null,
+            gradeData.prof_id || gradeData.professor_id || null,
             gradeData.student_academic_number,
             gradeData.student_name,
             gradeData.student_email || null,
             gradeData.semester,
+            gradeData.academic_year || null,
             gradeData.course_name,
             gradeData.course_code,
             gradeData.grade_scale,
-            gradeData.grade,
-            gradeData.submission_id
+            gradeData.grade.toString(),
+            gradeData.submission_id || null
           ]
         );
-        console.log(`Updated grade for grades_id: ${gradeData.grades_id}`);
+        console.log(`Updated grade for grade service ID: ${gradeServiceId}`);
       }
     } catch (error) {
       console.error('Error processing grade message:', error);
+      console.error('Grade data that caused error:', gradeData);
       throw error;
     }
   }
