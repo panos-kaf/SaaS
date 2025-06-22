@@ -66,6 +66,6 @@ router.post(
 );
 
 // routes/institutionRoutes.js
-router.get('/instructors', authenticateJWT, attachUserFromHeader, institutionController.getInstructors);
+// router.get('/instructors', authenticateJWT, attachUserFromHeader, institutionController.getInstructors);
 
 module.exports = router;
