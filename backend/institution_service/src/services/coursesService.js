@@ -1,5 +1,5 @@
 const db = require('../database/db');
-const { publisher } = require('../messaging/setup');
+const messaging = require('../messaging/setup');
 
 /**
  * Service for handling courses operations and messaging
@@ -167,7 +167,7 @@ class CoursesService {
         }
       };
 
-      await publisher.publishCourseEvent(eventData);
+      await messaging.publisher.publishCourseEvent(eventData);
       console.log(`Course event published: ${eventType} for course ${courseData.course_id}`);
     } catch (error) {
       console.error('Error publishing course event:', error);
