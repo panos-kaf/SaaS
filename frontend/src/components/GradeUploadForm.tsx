@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useMessage } from './Messages';
+import { config } from '../config';
+
 
 interface ParsedInfo {
   courseName: string;
@@ -57,7 +59,7 @@ const GradeUploadForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📤 Submit clicked. File:', file);
+    console.log(' Submit clicked. File:', file);
     if (!file) {
       showMessage({ type: 'cancel', text: 'No file selected.' });
       return;
@@ -73,7 +75,7 @@ const GradeUploadForm: React.FC = () => {
     formData.append('gradesFile', file);
 
     try {
-      const response = await fetch('http://localhost:3002/grade-submissions', {
+      const response = await fetch(`${config.apiUrl}/post-grades/grade-submissions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
