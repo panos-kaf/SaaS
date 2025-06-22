@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useMessage } from "../../components/Messages";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { config } from "../../config";
 
 const initialCourse = {
   course_code: "",
@@ -56,13 +57,43 @@ const InstitutionDashboard: React.FC = () => {
 
   const handleCloseModal = () => setShowModal(false);
 
-  const hadleRegisterCourse = () => {
+  const handleRegisterCourseMock = () => {
     showMessage({
       type: "success",
       text: "Course registered successfully!",
     });
     setShowModal(false);
   };
+
+const handleRegisterCourse = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!course.course_code || !course.course_name || !course.department || !course.semester || !course.academic_year || !course.professor_id) {
+    showMessage({ type: 'cancel', text: 'Please fill in all fields.' });
+    return;
+  }
+
+  try {
+    const response = await fetch(`${config.apiUrl}/institution/register-courses/${6}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({courses: [course]}),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Signup failed');
+    }
+
+    showMessage({ type: 'success', text: 'Course registered successfully!' });
+    setShowModal(false);
+  } catch (error: any) {
+    showMessage({ type: 'error', text: error.message || 'Course registration failed' });
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCourse({ ...course, [e.target.name]: e.target.value });
@@ -166,7 +197,7 @@ const InstitutionDashboard: React.FC = () => {
                 <button 
                   type="submit" 
                   className="modal-submit"
-                  onClick={hadleRegisterCourse}
+                  onClick={handleRegisterCourse}
                 >
                   Register
                 </button>
