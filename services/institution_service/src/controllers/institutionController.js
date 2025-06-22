@@ -10,7 +10,7 @@ class InstitutionController {
   
   /**
    * Enroll a new institution
-   * POST /add-inst/
+   * POST /inst/
    */
   async enrollInstitution(req, res) {
     try {

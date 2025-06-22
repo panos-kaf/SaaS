@@ -140,7 +140,7 @@ const ReplyRequestsPage: React.FC = () => {
             </thead>
             <tbody>
                 {data.map((row, index) => {
-                  console.log(`Row ${index}:`, row); 
+                  //console.log(`Row ${index}:`, row); 
 
                   return (
                     <tr key={row.id || index} className="border-t">
@@ -152,7 +152,7 @@ const ReplyRequestsPage: React.FC = () => {
                         <button
                           className="reply-button"
                           onClick={() => {
-                            console.log('Setting activeReply:', row); 
+                            //console.log('Setting activeReply:', row); 
                             setActiveReply(row);
                           }}
                         >
