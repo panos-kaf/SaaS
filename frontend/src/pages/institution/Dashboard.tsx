@@ -57,14 +57,6 @@ const InstitutionDashboard: React.FC = () => {
 
   const handleCloseModal = () => setShowModal(false);
 
-  const handleRegisterCourseMock = () => {
-    showMessage({
-      type: "success",
-      text: "Course registered successfully!",
-    });
-    setShowModal(false);
-  };
-
 const handleRegisterCourse = async (e: React.FormEvent) => {
   e.preventDefault();
 
@@ -78,6 +70,7 @@ const handleRegisterCourse = async (e: React.FormEvent) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify({courses: [course]}),
     });
