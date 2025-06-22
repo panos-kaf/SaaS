@@ -20,16 +20,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  if (!username || !password) {
+    showMessage({ type: 'cancel', text: 'Please fill in your username and password.' });
+    return;
+  }
+
   try {
     const response = await fetch(`${config.apiUrl}/users/signin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        username: username, // username or email
-        password,
-      }),
+      body: JSON.stringify({ username, password }),
     });
 
     const data = await response.json();
@@ -38,17 +40,13 @@ const handleSubmit = async (e: React.FormEvent) => {
       throw new Error(data.message || 'Login failed');
     }
 
-    // Save token and role to localStorage
     localStorage.setItem('token', data.token);
     localStorage.setItem('role', data.user.role);
 
-    onLogin(); // Notify app of login
+    onLogin();
 
-    // Redirect based on role
     switch (data.user.role) {
       case 'student':
-        navigate('/course-statistics');
-        break;
       case 'instructor':
         navigate('/course-statistics');
         break;
@@ -57,7 +55,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         break;
       default:
         showMessage({ type: 'cancel', text: 'Unknown role' });
+        return;
     }
+
+    showMessage({ type: 'success', text: `Welcome back, ${data.user.username}!` });
   } catch (error: any) {
     showMessage({ type: 'cancel', text: error.message || 'Login failed' });
   }
@@ -73,6 +74,11 @@ const [signupEmail, setSignupEmail] = useState('');
 const [signupUsername, setSignupUsername] = useState('');
 const [signupPassword, setSignupPassword] = useState('');
 const [signupRole, setSignupRole] = useState('student');
+const [signupAcademicId, setSignupAcademicId] = useState('');
+const [signupFirstName, setSignupFirstName] = useState('');
+const [signupLastName, setSignupLastName] = useState('');
+const [signupDepartment, setSignupDepartment] = useState('');
+const [signupInstitutionId, setSignupInstitutionId] = useState('');
 
 const location = useLocation();
 
@@ -92,6 +98,11 @@ useEffect(() => {
 const handleSignup = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  if (!signupUsername || !signupPassword || !signupEmail) {
+    showMessage({ type: 'cancel', text: 'Please fill in your username, email, and password.' });
+    return;
+  }
+
   try {
     const response = await fetch(`${config.apiUrl}/users/signup`, {
       method: 'POST',
@@ -99,11 +110,16 @@ const handleSignup = async (e: React.FormEvent) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: signupEmail,
-        username: signupUsername,
-        password: signupPassword,
-        role: signupRole,
-      }),
+      email: signupEmail,
+      username: signupUsername,
+      password: signupPassword,
+      role: signupRole,
+      academicId: signupAcademicId,
+      firstName: signupFirstName,
+      lastName: signupLastName,
+      department: signupDepartment,
+      institutionId: signupInstitutionId,
+    }),
     });
 
     const data = await response.json();
@@ -131,7 +147,6 @@ return (
               placeholder="Email"
               value={signupEmail}
               onChange={(e) => setSignupEmail(e.target.value)}
-              required
               className="w-full px-3 py-2 border rounded"
             />
             <input
@@ -139,7 +154,6 @@ return (
               placeholder="Username"
               value={signupUsername}
               onChange={(e) => setSignupUsername(e.target.value)}
-              required
               className="w-full px-3 py-2 border rounded"
             />
             <input
@@ -147,7 +161,41 @@ return (
               placeholder="Password"
               value={signupPassword}
               onChange={(e) => setSignupPassword(e.target.value)}
-              required
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="Academic ID"
+              value={signupAcademicId}
+              onChange={(e) => setSignupAcademicId(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="First Name"
+              value={signupFirstName}
+              onChange={(e) => setSignupFirstName(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="Last Name"
+              value={signupLastName}
+              onChange={(e) => setSignupLastName(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="Department"
+              value={signupDepartment}
+              onChange={(e) => setSignupDepartment(e.target.value)}
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="Institution ID"
+              value={signupInstitutionId}
+              onChange={(e) => setSignupInstitutionId(e.target.value)}
               className="w-full px-3 py-2 border rounded"
             />
             <select
@@ -178,7 +226,6 @@ return (
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          required
           placeholder="Email or Username"
           className="form-input"
         />
@@ -186,7 +233,6 @@ return (
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
           placeholder="Password"
           className="form-input"
         />
