@@ -17,7 +17,7 @@ const initialCourse = {
 const InstitutionDashboard: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [course, setCourse] = useState(initialCourse);
-  const [students, setStudents] = useState<string[]>([]);
+  const [students] = useState<string[]>([]);
   const [instructors, setInstructors] = useState<string[]>([]);
 
   const navigate = useNavigate();
