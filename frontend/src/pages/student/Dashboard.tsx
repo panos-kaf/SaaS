@@ -5,7 +5,7 @@ const StudentDashboard = () =>
 export default StudentDashboard;
 */
 
-import React from "react";
+//import React from "react";
 
 const Dashboard = () => {
   const statistics = [
