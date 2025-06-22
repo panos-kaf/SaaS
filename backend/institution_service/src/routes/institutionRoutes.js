@@ -65,4 +65,8 @@ router.post(
   institutionController.syncCourses
 );
 
+// routes/institutionRoutes.js
+router.get('/instructors', authenticateJWT, attachUserFromHeader, institutionController.getInstructors);
+
+
 module.exports = router;

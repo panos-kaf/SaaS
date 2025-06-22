@@ -294,6 +294,31 @@ class InstitutionController {
     }
   }
 
+  async getInstructors(req, res) {
+    try {
+      const institution_ID = req.user.institution_id;
+      console.log(req.user)
+
+      const result = await db.query(
+        `SELECT user_service_id, academic_id, first_name, last_name, email 
+        FROM users_profile
+        WHERE role = 'instructor' AND institution_id = $1`,
+        [institution_ID]
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result.rows
+      });
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch instructors'
+      });
+    }
+  }
+
   /**
    * Register courses for an institution
    * POST /register_courses/:institution_ID
