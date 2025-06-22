@@ -40,7 +40,14 @@ const ReplyRequestsPage: React.FC = () => {
         }
 
         const jsonData = await response.json();
-        setData(jsonData.requests);
+        setData(jsonData.requests.map((r: any) => ({
+          id: r.request_id, 
+          course_name: r.course_name,
+          exam_period: r.exam_period,
+          student_name: r.student_name,
+          request_body: r.request_body,
+        })));
+
       } catch (error) {
         console.error(error);
         showMessage({ type: 'cancel', text: 'Error loading requests' });
@@ -80,7 +87,7 @@ const ReplyRequestsPage: React.FC = () => {
       // Δημιουργούμε το reply_body που θα στείλουμε
       const combinedReplyBody = `Reply: ${replyMessage.trim()}${newGrade ? `\nNew Grade: ${newGrade}` : ''}`;
 
-      const response = await fetch(`${config.apiUrl}/create-reply/${activeReply.id}`, {
+      const response = await fetch(`${config.apiUrl}/replies/create-reply/${activeReply.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,22 +139,29 @@ const ReplyRequestsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {data.map((row) => (
-                <tr key={row.id} className="border-t">
-                  <td className="p-2">{row.course_name}</td>
-                  <td className="p-2">{row.exam_period}</td>
-                  <td className="p-2">{row.student_name}</td>
-                  <td className="p-2">{row.request_body}</td>
-                  <td className="p-2">
-                    <button
-                      className="reply-button"
-                      onClick={() => setActiveReply(row)}
-                    >
-                      Reply
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                {data.map((row, index) => {
+                  console.log(`Row ${index}:`, row); 
+
+                  return (
+                    <tr key={row.id || index} className="border-t">
+                      <td className="p-2">{row.course_name}</td>
+                      <td className="p-2">{row.exam_period}</td>
+                      <td className="p-2">{row.student_name}</td>
+                      <td className="p-2">{row.request_body}</td>
+                      <td className="p-2">
+                        <button
+                          className="reply-button"
+                          onClick={() => {
+                            console.log('Setting activeReply:', row); 
+                            setActiveReply(row);
+                          }}
+                        >
+                          Reply
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
 

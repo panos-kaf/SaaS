@@ -8,7 +8,14 @@ const createReply = async (req, res) => {
   const { requestID } = req.params;
   const { reply_body } = req.body;
   const user_id = req.user.id; // Get user_id from JWT token via auth middleware
-  
+
+  console.log('💬 createReply called');
+  console.log('req.user:', req.user); 
+
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ message: 'User not attached via x-user' });
+  }
+
   try {
     // Verify that the request exists
     const requestCheck = await db.query(
