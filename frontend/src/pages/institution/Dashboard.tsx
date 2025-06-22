@@ -245,7 +245,7 @@ const handleRegisterCourse = async (e: React.FormEvent) => {
             placeholder="Search instructors..."
             value={instructorSearch}
             onChange={(e) => setInstructorSearch(e.target.value)}
-            className="modal-input w-full"
+            className="modal-input-search w-full"
           />
         </div>
         <ul className="list-disc pl-6 text-gray-700 dark:text-gray-200">
@@ -286,7 +286,7 @@ const handleRegisterCourse = async (e: React.FormEvent) => {
             placeholder="Search students..."
             value={studentSearch}
             onChange={(e) => setStudentSearch(e.target.value)}
-            className="modal-input w-full"
+            className="modal-input-search w-full"
           />
         </div>
         <ul className="list-disc pl-6 text-gray-700 dark:text-gray-200">
