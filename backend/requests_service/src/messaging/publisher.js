@@ -88,18 +88,23 @@ class MessagingPublisher {
 
     try {
       // Create a message with the request data and add event metadata
+      
       const message = {
-        ...request,
-        event: 'new_request_created',
+        event_type: 'request_created',   // << matches subscriber
+        data: { ...request },            // << nest the actual request
         timestamp: new Date().toISOString()
       };
 
       // Create a Buffer from the JSON string
       const messageBuffer = Buffer.from(JSON.stringify(message));
       
-      // Publish to the exchange with the routing key
-      const result = this.channel.publish(this.requestsExchange, this.routingKey, messageBuffer);
-      
+      // Publish, make the message persistent so it survives broker restarts
+      const result = this.channel.publish(
+        this.requestsExchange,
+        this.routingKey,
+        messageBuffer,
+        { persistent: true, mandatory: true }   // <— guarantees return if no queue is bound
+      );      
       if (result) {
         console.log(`Request published successfully: ${request.request_id}`);
       } else {
