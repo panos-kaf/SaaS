@@ -14,5 +14,5 @@
 Currently 5 Coding, 3 Design, 2 Architecture
 
 ++ desp: 6 arch, 6 design, 4 coding, 4 deployment
-
+update: +4 coding +2 design +2 architecture +2 demployment
 Δείτε το video: https://youtu.be/eUAjxCRNODU
