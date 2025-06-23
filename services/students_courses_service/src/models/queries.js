@@ -369,11 +369,40 @@ async function saveUserFromQueue(userData) {
   }
 }
 
+async function getAvailableInstitutionCoursesByUser(userId) {
+  try {
+    // First get the institution_id of the user
+    const userResult = await db.query(
+      'SELECT institution_id FROM users_profile WHERE user_profile_id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      throw new Error('User not found');
+    }
+
+    const institutionId = userResult.rows[0].institution_id;
+
+    // Now fetch all courses from institution_courses for that institution
+    const result = await db.query(
+      'SELECT course_id AS id, course_name AS name FROM institution_courses WHERE institution_id = $1 ORDER BY course_name',
+      [institutionId]
+    );
+
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting institution courses:', error);
+    throw error;
+  }
+}
+
+
 module.exports = {
   getCoursesByUserId,
   addCourseForUser,
   getGradeForUserCourse,
   saveGradeFromQueue,
   getAllCourses,
-  saveUserFromQueue
+  saveUserFromQueue,
+  getAvailableInstitutionCoursesByUser
 };

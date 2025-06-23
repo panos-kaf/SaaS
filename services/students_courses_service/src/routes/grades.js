@@ -9,6 +9,8 @@ router.get(
   coursesController.getCourses
 );
 
+router.get('/institution-student-courses', coursesController.getInstitutionCourses);
+
 // Add a course for a specific user - professors and admins only
 router.post(
   '/add-course/:course_ID',

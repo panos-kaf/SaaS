@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { config } from '../../config';
-import { useMessage } from '../../components/Messages';
+import { useEffect, useState } from "react";
+import { config } from "../../config";
+import { useMessage } from "../../components/Messages";
 
 interface Course {
   id: number;
@@ -11,21 +11,80 @@ interface Course {
   profID: number;
 }
 
+interface InstitutionCourse {
+  id: number;
+  name: string;
+}
+
 const MyCourses = () => {
-
   const { showMessage } = useMessage();
-
-  const courses: Course[] = [
-    { id: 1, courseName: "physics", examPeriod: "spring 2025", gradingStatus: "open", gradeID: 5, profID: 1 },
-    { id: 2, courseName: "software", examPeriod: "fall 2024", gradingStatus: "open", gradeID: 5, profID: 2 },
-    { id: 3, courseName: "mathematics", examPeriod: "fall 2024", gradingStatus: "open", gradeID: 3, profID: 3 }
-  ];
-
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [institutionCourses, setInstitutionCourses] = useState<InstitutionCourse[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [reviewMessage, setReviewMessage] = useState("");
   const [viewStatusCourse, setViewStatusCourse] = useState<Course | null>(null);
   const [gradeViewCourse, setGradeViewCourse] = useState<Course | null>(null);
   const [instructorReply, setInstructorReply] = useState<string | null>(null);
+  const [selectedToAdd, setSelectedToAdd] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchStudentCourses = async () => {
+      try {
+        const token = localStorage.getItem("token") || "";
+        const res = await fetch(`${config.apiUrl}/student-courses/get-courses`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setCourses(data.courses || []);
+      } catch (err) {
+        console.error("Error loading courses:", err);
+        showMessage({ type: "cancel", text: "Failed to load your courses." });
+      }
+    };
+
+    const fetchInstitutionCourses = async () => {
+      try {
+        const token = localStorage.getItem("token") || "";
+        const res = await fetch(`${config.apiUrl}/student-courses/institution-student-courses`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setInstitutionCourses(data.courses || []);
+      } catch (err) {
+        console.error("Error loading institution courses:", err);
+      }
+    };
+
+    fetchStudentCourses();
+    fetchInstitutionCourses();
+  }, []);
+
+  const handleAddCourse = async () => {
+    if (!selectedToAdd) return;
+
+    try {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${config.apiUrl}/student-courses/add-course`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ course_id: selectedToAdd }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        showMessage({ type: "success", text: "Course added successfully!" });
+      } else {
+        showMessage({ type: "cancel", text: result.message || "Failed to add course." });
+      }
+    } catch (err) {
+      console.error("Error adding course:", err);
+      showMessage({ type: "cancel", text: "An error occurred while adding course." });
+    }
+  };
 
   const handleReviewClick = (course: Course) => {
     if (course.gradingStatus === "open") {
@@ -35,16 +94,49 @@ const MyCourses = () => {
     }
   };
 
+  const handleSubmitReview = async () => {
+    if (!selectedCourse || reviewMessage.trim() === "") {
+      showMessage({ type: "cancel", text: "Review message is required." });
+      return;
+    }
+
+    const { id: courseID, gradeID, profID } = selectedCourse;
+
+    try {
+      const res = await fetch(`${config.apiUrl}/requests/post-request/${courseID}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requestBody: reviewMessage, gradeID, profID }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        showMessage({ type: "success", text: "Review request submitted!" });
+        setReviewMessage("");
+        setSelectedCourse(null);
+      } else {
+        showMessage({ type: "cancel", text: result.error || "Failed to submit review." });
+      }
+    } catch (err) {
+      console.error("Review request error:", err);
+      showMessage({ type: "cancel", text: "Could not submit review." });
+    }
+  };
+
   const handleViewStatusClick = async (course: Course) => {
     try {
       const token = localStorage.getItem("token") || "";
 
       const reqRes = await fetch(`${config.apiUrl}/requests/my-request?course_id=${course.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!reqRes.ok) {
-        setInstructorReply(null);  // No request made
+        setInstructorReply(null);
         setViewStatusCourse(course);
         return;
       }
@@ -59,16 +151,11 @@ const MyCourses = () => {
       }
 
       const replyRes = await fetch(`${config.apiUrl}/replies/view-replies/${requestID}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const replyData = await replyRes.json();
-
-      if (replyData?.data?.length > 0) {
-        setInstructorReply(replyData.data[0].reply_body);
-      } else {
-        setInstructorReply("");  // No reply yet
-      }
+      setInstructorReply(replyData?.data?.[0]?.reply_body ?? "");
 
       setViewStatusCourse(course);
       setSelectedCourse(null);
@@ -85,44 +172,32 @@ const MyCourses = () => {
     setViewStatusCourse(null);
   };
 
-  const handleSubmitReview = async () => {
-    if (!selectedCourse || reviewMessage.trim() === "") {
-      showMessage({ type: "cancel", text: "Review message is required." });
-      return;
-    }
-
-    const courseID = selectedCourse.id;
-    const gradeID = selectedCourse.gradeID;
-    const profID = selectedCourse.profID;
-
-    try {
-      const response = await fetch(`${config.apiUrl}/requests/post-request/${courseID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("token") || ""}`
-        },
-        body: JSON.stringify({ requestBody: reviewMessage, gradeID, profID })
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        showMessage({ type: 'success', text: 'Review request submitted successfully!' });
-        setReviewMessage("");
-        setSelectedCourse(null);
-      } else {
-        showMessage({ type: 'cancel', text: result.error || 'Failed to submit review request.' });
-      }
-    } catch (err) {
-      console.error('Error submitting review:', err);
-      showMessage({ type: 'cancel', text: 'An error occurred while submitting the review.' });
-    }
-  };
-
   return (
     <div className="p-6 text-white">
       <h2 className="text-2xl font-semibold mb-4">My Courses</h2>
+
+      <div className="mb-4 flex items-center gap-2">
+        <select
+          className="p-2 rounded text-black"
+          value={selectedToAdd ?? ""}
+          onChange={(e) => setSelectedToAdd(Number(e.target.value))}
+        >
+          <option value="">Select a course</option>
+          {institutionCourses.map((course) => (
+            <option key={course.id} value={course.id}>
+              {course.name}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleAddCourse}
+          disabled={!selectedToAdd}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        >
+          Add
+        </button>
+      </div>
+
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="bg-gray-700 text-white">
@@ -139,7 +214,10 @@ const MyCourses = () => {
               <td className="p-2 border">{course.examPeriod}</td>
               <td className="p-2 border">{course.gradingStatus}</td>
               <td className="p-2 border space-x-2">
-                <button onClick={() => handleViewGradeClick(course)} className="bg-blue-500 px-2 py-1 rounded text-sm">
+                <button
+                  onClick={() => handleViewGradeClick(course)}
+                  className="bg-blue-500 px-2 py-1 rounded text-sm"
+                >
                   View my grade
                 </button>
                 <button
@@ -153,7 +231,10 @@ const MyCourses = () => {
                 >
                   Ask for review
                 </button>
-                <button onClick={() => handleViewStatusClick(course)} className="bg-green-600 px-2 py-1 rounded text-sm">
+                <button
+                  onClick={() => handleViewStatusClick(course)}
+                  className="bg-green-600 px-2 py-1 rounded text-sm"
+                >
                   View review status
                 </button>
               </td>
@@ -173,7 +254,7 @@ const MyCourses = () => {
             placeholder="Message to instructor"
             value={reviewMessage}
             onChange={(e) => setReviewMessage(e.target.value)}
-          ></textarea>
+          />
           <button
             className="mt-2 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white"
             onClick={handleSubmitReview}
@@ -188,14 +269,13 @@ const MyCourses = () => {
           <h3 className="text-xl font-semibold mb-4">
             REVIEW REQUEST STATUS – {viewStatusCourse.courseName} – {viewStatusCourse.examPeriod}
           </h3>
-
           {instructorReply === null ? (
             <div className="bg-yellow-100 text-yellow-800 px-4 py-3 rounded shadow mb-2 border border-yellow-300">
-               No review request has been submitted for this course.
+              No review request has been submitted for this course.
             </div>
           ) : instructorReply === "" ? (
             <div className="bg-yellow-100 text-yellow-800 px-4 py-3 rounded shadow mb-2 border border-yellow-300">
-               No reply received yet from instructor.
+              No reply received yet from instructor.
             </div>
           ) : (
             <>
@@ -205,8 +285,7 @@ const MyCourses = () => {
                 rows={4}
                 readOnly
                 value={instructorReply}
-              ></textarea>
-
+              />
               <div className="mt-3 flex gap-2">
                 <button className="bg-gray-400 hover:bg-gray-500 px-4 py-2 rounded text-white">
                   Download attachment
@@ -228,7 +307,7 @@ const MyCourses = () => {
           <h3 className="text-xl font-semibold mb-4">
             my grades – {gradeViewCourse.courseName} – {gradeViewCourse.examPeriod}
           </h3>
-          {/* You can add grade display here */}
+          {/* Add grade info here if needed */}
         </div>
       )}
     </div>
