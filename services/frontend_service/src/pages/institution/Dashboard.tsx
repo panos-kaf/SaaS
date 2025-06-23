@@ -81,7 +81,7 @@ const InstitutionDashboard: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${config.apiUrl}/institution/register-courses/${6}`, {
+      const response = await fetch(`${config.apiUrl}/institution/register-courses/${1}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
