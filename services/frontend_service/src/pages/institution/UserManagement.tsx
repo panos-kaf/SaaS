@@ -15,7 +15,7 @@ const UserManagementPage = () => {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  if (!username || !password || !userId) {
+  if (!username || !password) {
     showMessage({ type: "cancel", text: "All fields are required." });
     return;
   }
@@ -87,17 +87,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <option value="student">Student</option>
             </select>
         </label>
-
-        <label className="user-management-label">
-          User ID
-          <input
-            type="text"
-            className="user-management-input"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-          />
-        </label>
-
         <label className="user-management-label">
           Email
           <input

@@ -142,16 +142,13 @@ class InstitutionController {
         });
       }
 
-      // Generate purchase ID
       const purchase_id = uuidv4();
-
-      // Begin transaction
       const client = await db.pool.connect();
-      
+
       try {
         await client.query('BEGIN');
 
-        // Record the credit transaction
+        // Insert credit transaction
         await client.query(
           `INSERT INTO credit_transactions (
             institution_id, amount, transaction_type, purchase_id, description
@@ -159,13 +156,13 @@ class InstitutionController {
           [institution_ID, amount, purchase_id, description || 'Credit purchase']
         );
 
-        // Update institution credits
+        // Correct calculation: update total_credits and available_credits in one go
         const updateResult = await client.query(
           `UPDATE institution_credits 
-           SET total_credits = total_credits + $1,
-               available_credits = total_credits - used_credits
-           WHERE institution_id = $2
-           RETURNING total_credits, used_credits, available_credits`,
+          SET total_credits = total_credits + $1,
+              available_credits = (total_credits + $1) - used_credits
+          WHERE institution_id = $2
+          RETURNING total_credits, used_credits, available_credits`,
           [amount, institution_ID]
         );
 
@@ -173,7 +170,7 @@ class InstitutionController {
 
         const credits = updateResult.rows[0];
 
-        // Publish credit purchase event
+        // Optional event publishing
         try {
           await messagingSetup.publisher.publishInstitutionEvent({
             event_type: 'credits_purchased',
@@ -186,10 +183,9 @@ class InstitutionController {
           });
         } catch (messageError) {
           console.error('Failed to publish credit purchase event:', messageError);
-          // Continue with success response even if messaging fails
         }
 
-        res.status(200).json({
+        return res.status(200).json({
           success: true,
           message: 'Credits added successfully',
           data: {
@@ -211,13 +207,14 @@ class InstitutionController {
 
     } catch (error) {
       console.error('Error adding credits:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'An error occurred while adding credits',
         error: error.message
       });
     }
   }
+
 
   /**
    * View credits for an institution
