@@ -19,4 +19,7 @@ gia: 8 arch , 2 coding
 
 update: +4 coding +2 design +2 architecture +2 demployment
 update: +5 design +4 coding +1 deployment
+
++4 coding, 3 design, 3 deploy
+
 Δείτε το video: https://youtu.be/eUAjxCRNODU
