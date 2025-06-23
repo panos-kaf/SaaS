@@ -8,6 +8,12 @@ interface ParsedInfo {
   courseName: string;
   period: string;
   entriesCount: number;
+  sample?: {
+    academicId: string;
+    fullName: string;
+    email: string;
+    grade: string;
+  };
 }
 
 const GradeUploadForm: React.FC = () => {
@@ -32,30 +38,41 @@ const GradeUploadForm: React.FC = () => {
       return;
     }
 
-    // Ξεκίνα από τη δεύτερη γραμμή και βρες την πρώτη που έχει πραγματικό περιεχόμενο
-    const metadataRow = jsonData.slice(1).find(
-      (row) => Array.isArray(row) && row[4]?.includes('ΛΟΓΙΣΜΙΚΟΥ') && row[3]
-    ) as string[] | undefined;
+    // Assume first row is header, data starts from second row
+    const dataRows = jsonData.slice(1).filter(
+      (row) =>
+        Array.isArray(row) &&
+        row[0] && // Academic ID
+        row[1] && // Full Name
+        row[2] && // Email
+        row[3] && // Academic Period
+        row[4] && // Course Name
+        row[6]    // Grade
+    );
 
-    if (!metadataRow) {
-      showMessage({ type: 'cancel', text: 'Could not detect course or period row.' });
+    if (dataRows.length === 0) {
+      showMessage({ type: 'cancel', text: 'No valid student entries found.' });
       return;
     }
 
-    const courseName = metadataRow[4]?.split('(')[0]?.trim() || 'Unknown';
-    const period = metadataRow[3]?.trim() || 'Unknown';
-    const entriesCount = jsonData.length - 1;
+    // Use the first valid row as a sample
+    const sampleRow = dataRows[0];
+    const courseName = sampleRow[4]?.trim() || 'Unknown';
+    const period = sampleRow[3]?.trim() || 'Unknown';
+    const entriesCount = dataRows.length;
 
-    console.log('metadataRow:', metadataRow);
-    console.log('courseName:', courseName);
-    console.log('period:', period);
-    console.log('length:', entriesCount);
-
-    setParsedInfo({ courseName, period, entriesCount });
+    setParsedInfo({
+      courseName,
+      period,
+      entriesCount,
+      sample: {
+        academicId: sampleRow[0],
+        fullName: sampleRow[1],
+        email: sampleRow[2],
+        grade: sampleRow[6],
+      }
+    });
   };
-
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
