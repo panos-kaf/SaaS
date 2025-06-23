@@ -205,6 +205,7 @@ return (
             >
               <option value="student">Student</option>
               <option value="instructor">Instructor</option>
+              <option value="institution">Institution Representative</option>
             </select>
             <div className="flex justify-between">
               <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
