@@ -18,7 +18,7 @@ const CreditsPage = () => {
           },
         });
         const data = await response.json();
-        setCredits(data.credits.available_credits ?? 0);
+        setCredits(data.data?.credits?.available_credits ?? 0);
       } catch (err) {
         setCredits(0);
       }
@@ -50,7 +50,7 @@ const handlePurchase = async (e: React.FormEvent) => {
     setCredits((prev) => (prev ?? 0) + selectedAmount);
     showMessage({
       type: "success",
-      text: `Successfully purchased ${selectedAmount} credits. Purchase ID: ${data.purchase_id || "N/A"}`,
+      text: `Successfully purchased ${selectedAmount} credits. Purchase ID: ${data.data?.purchase_id || "N/A"}`,
       duration: 10000,
     });
     setSelectedAmount(null);
