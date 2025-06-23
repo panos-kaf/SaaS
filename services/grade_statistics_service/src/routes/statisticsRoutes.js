@@ -6,7 +6,7 @@ const statisticsController = new StatisticsController();
 
 // Get statistics for a course - only professors and admins should access this
 router.get(
-  '/stats',
+  '/stats/:courseId',
   statisticsController.getStatistics.bind(statisticsController)
 );
 
