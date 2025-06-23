@@ -66,7 +66,7 @@ apiRouter.use('/replies', authenticateJWT, attachUserHeader, createProxyMiddlewa
   pathRewrite: { '^/api/replies': '' },
 }));
 
-apiRouter.use('/post-grades', createProxyMiddleware({
+apiRouter.use('/post-grades', authenticateJWT, attachUserHeader, createProxyMiddleware({
   target: config.services.postGrades,
   changeOrigin: true,
   pathRewrite: { '^/api/post-grades': '' },

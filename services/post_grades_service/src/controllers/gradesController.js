@@ -20,6 +20,38 @@ const deleteFile = (filePath) => {
     }
 };
 
+exports.getInstructorCourses = async (req, res) => {
+  const instructorId = req.user.id;
+
+  try {
+    const result = await db.query(
+    `SELECT 
+        ic.course_id, 
+        ic.course_name, 
+        ic.course_code, 
+        ic.department, 
+        ic.semester, 
+        ic.academic_year,
+        COALESCE(gs.finalized, false) AS finalized
+    FROM institution_courses ic
+    LEFT JOIN grade_submissions gs 
+        ON gs.owner_user_service_id::int = ic.professor_id
+    WHERE ic.professor_id = $1::int
+    GROUP BY ic.course_id, ic.course_name, ic.course_code, ic.department, ic.semester, ic.academic_year, gs.finalized`,
+    [instructorId]
+    );
+
+    return res.status(200).json({
+      courses: result.rows,
+      count: result.rowCount
+    });
+  } catch (error) {
+    console.error('Error fetching instructor courses:', error);
+    return res.status(500).json({ error: 'Failed to fetch instructor courses' });
+  }
+};
+
+
 // Helper function to parse CSV and insert grades into the database
 const processGradesFile = (filePath, submissionId) => {
     return new Promise((resolve, reject) => {

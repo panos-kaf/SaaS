@@ -3,6 +3,8 @@ const multer = require('multer');
 const gradesController = require('../controllers/gradesController');
 
 const router = express.Router();
+// Get all course of specific instructor
+router.get('/get-courses', gradesController.getInstructorCourses);
 
 // Configure multer for file uploads
 // SET THE DESTINATION FOR FILE UPLOADS
@@ -32,6 +34,7 @@ const upload = multer({
         }
     }
 });
+
 
 // Function to get submission owner ID for ownership verification
 const getSubmissionOwnerId = async (req) => {

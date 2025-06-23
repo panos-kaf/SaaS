@@ -4,6 +4,7 @@ const {
   getGradeForUserCourse,
   getAllCourses
 } = require('../models/queries');
+const db = require('../db/db');
 
 class CoursesController {
   /**
