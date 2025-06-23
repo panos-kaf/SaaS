@@ -80,6 +80,11 @@ body, html, #root {
 /* #endregion */
 
 /* #region Course Statistics */
+
+.statistics-title{
+  @apply text-2xl font-bold mb-4 text-amber-500;
+}
+
 .statistics-container {
   @apply p-6 text-white space-y-8;
 }
