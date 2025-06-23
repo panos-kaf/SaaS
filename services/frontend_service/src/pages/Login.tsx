@@ -114,11 +114,11 @@ const handleSignup = async (e: React.FormEvent) => {
       username: signupUsername,
       password: signupPassword,
       role: signupRole,
-      academicId: signupAcademicId,
-      firstName: signupFirstName,
-      lastName: signupLastName,
+      academic_id: signupAcademicId,
+      first_name: signupFirstName,
+      last_name: signupLastName,
       department: signupDepartment,
-      institutionId: signupInstitutionId,
+      institution_id: signupInstitutionId,
     }),
     });
 
