@@ -34,8 +34,8 @@ interface GradeSheet {
 }
 
 interface CoursePeriodEntry {
-  courseCode: string;
   courseName: string;
+  courseCode: string;
   period: string;
   semester: string;
 }
@@ -73,20 +73,23 @@ export default function CourseStatistics() {
         .finally(() => setLoadingCourses(false));
     }, []);
 
-    const filteredAndSorted = allCourses
-    .filter((entry) =>
-    `${entry.courseName} ${entry.period}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-    const valA = a[sortField];
-    const valB = b[sortField];
+const filteredAndSorted = allCourses
+  .filter((entry) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      entry.courseName.toLowerCase().includes(search) ||
+      entry.courseCode.toLowerCase().includes(search) ||
+      entry.semester.toLowerCase().includes(search) ||
+      entry.period.toString().toLowerCase().includes(search)
+    );
+  })
+  .sort((a, b) => {
+    const valA = a?.[sortField] ?? "";
+    const valB = b?.[sortField] ?? "";
     return sortAsc
-        ? valA.localeCompare(valB)
-        : valB.localeCompare(valA);
-    });
-
+      ? valA.localeCompare(valB)
+      : valB.localeCompare(valA);
+  });
     const [statistics, setStatistics] = useState<{
     count: number;
     total: number[];
@@ -133,7 +136,7 @@ export default function CourseStatistics() {
         <table className="statistics-table w-full text-sm">
             <thead className="statistics-thead">
             <tr>
-                {(["courseCode", "courseName", "period", "semester"] as const).map((field) => (
+                {(["courseName", "courseCode", "period", "semester"] as const).map((field) => (
                 <th
                     key={field}
                     className="statistics-th statistics-header-clickable"
@@ -146,8 +149,8 @@ export default function CourseStatistics() {
                     }}
                 >
                     {{
-                    courseCode: "CourseCode",
                     courseName: "CourseName",
+                    courseCode: "CourseCode",
                     period: "Exam Period",
                     semester: "Semester",
                     }[field]}
