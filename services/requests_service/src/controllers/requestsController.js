@@ -79,7 +79,7 @@ const getRequestsByUser = async (req, res) => {
             r.request_body,
             u.first_name || ' ' || u.last_name AS student_name
           FROM requests r
-          JOIN grades g ON r.grade_id = g.grade_id
+          JOIN grades g ON r.grade_id = g.grades_id
           JOIN users_profile u ON r.owner_id = u.user_service_id
           WHERE r.prof_id = $1
           ORDER BY r.timestamp DESC;`,

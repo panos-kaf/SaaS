@@ -1,13 +1,15 @@
+// src/pages/ReplyRequestsPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useMessage } from '../../components/Messages';
 import { config } from '../../config';
 
 interface ReplyRow {
-  id: number;           
+  id: number;
   course_name: string;
   exam_period: string;
   student_name: string;
   request_body: string;
+  has_reply: boolean;
 }
 
 type SortKey = keyof Pick<ReplyRow, 'course_name' | 'exam_period' | 'student_name' | 'request_body'>;
@@ -41,13 +43,13 @@ const ReplyRequestsPage: React.FC = () => {
 
         const jsonData = await response.json();
         setData(jsonData.requests.map((r: any) => ({
-          id: r.request_id, 
+          id: r.request_id,
           course_name: r.course_name,
           exam_period: r.exam_period,
           student_name: r.student_name,
           request_body: r.request_body,
+          has_reply: r.has_reply,
         })));
-
       } catch (error) {
         console.error(error);
         showMessage({ type: 'cancel', text: 'Error loading requests' });
@@ -80,11 +82,9 @@ const ReplyRequestsPage: React.FC = () => {
     }
 
     try {
-      // Παίρνουμε το value από το νέο grade input μέσα από ref ή DOM query
       const newGradeInput = document.querySelector('input[placeholder="optional"]') as HTMLInputElement;
       const newGrade = newGradeInput ? newGradeInput.value.trim() : '';
 
-      // Δημιουργούμε το reply_body που θα στείλουμε
       const combinedReplyBody = `Reply: ${replyMessage.trim()}${newGrade ? `\nNew Grade: ${newGrade}` : ''}`;
 
       const response = await fetch(`${config.apiUrl}/replies/create-reply/${activeReply.id}`, {
@@ -107,6 +107,13 @@ const ReplyRequestsPage: React.FC = () => {
       setActiveReply(null);
       setReplyMessage('');
       if (newGradeInput) newGradeInput.value = '';
+
+      // Refresh data
+      setData(prev =>
+        prev.map(row =>
+          row.id === activeReply.id ? { ...row, has_reply: true } : row
+        )
+      );
     } catch (error: any) {
       showMessage({ type: 'cancel', text: error.message || 'Error sending reply' });
     }
@@ -139,29 +146,24 @@ const ReplyRequestsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-                {data.map((row, index) => {
-                  //console.log(`Row ${index}:`, row); 
-
-                  return (
-                    <tr key={row.id || index} className="border-t">
-                      <td className="p-2">{row.course_name}</td>
-                      <td className="p-2">{row.exam_period}</td>
-                      <td className="p-2">{row.student_name}</td>
-                      <td className="p-2">{row.request_body}</td>
-                      <td className="p-2">
-                        <button
-                          className="reply-button"
-                          onClick={() => {
-                            //console.log('Setting activeReply:', row); 
-                            setActiveReply(row);
-                          }}
-                        >
-                          Reply
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+              {data.map((row, index) => (
+                <tr key={row.id || index} className="border-t">
+                  <td className="p-2">{row.course_name}</td>
+                  <td className="p-2">{row.exam_period}</td>
+                  <td className="p-2">{row.student_name}</td>
+                  <td className="p-2">{row.request_body}</td>
+                  <td className="p-2">
+                    <button
+                      className="reply-button"
+                      onClick={() => setActiveReply(row)}
+                      disabled={row.has_reply}
+                      style={row.has_reply ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
+                      {row.has_reply ? 'Replied' : 'Reply'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
