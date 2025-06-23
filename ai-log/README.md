@@ -18,4 +18,5 @@ Currently 5 Coding, 3 Design, 2 Architecture
 gia: 8 arch , 2 coding
 
 update: +4 coding +2 design +2 architecture +2 demployment
+update: +5 design +4 coding +1 deployment
 Δείτε το video: https://youtu.be/eUAjxCRNODU
