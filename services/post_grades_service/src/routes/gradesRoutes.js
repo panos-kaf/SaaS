@@ -60,9 +60,9 @@ router.post(
   gradesController.uploadAndProcessGrades
 );
 
-// PUT /grade-submissions/:submission_id/file - Updates the file for a specific grade submission
+// PUT /grade-submissions/:submission_id - Updates the file for a specific grade submission
 router.put(
-  '/grade-submissions/:submission_id/file', 
+  '/grade-submissions/:submission_id', 
   upload.single('gradesFile'), 
   gradesController.updateGradeSubmissionFile
 );

@@ -32,12 +32,13 @@ exports.getInstructorCourses = async (req, res) => {
         ic.department, 
         ic.semester, 
         ic.academic_year,
+        gs.submission_id,
         COALESCE(gs.finalized, false) AS finalized
     FROM institution_courses ic
     LEFT JOIN grade_submissions gs 
         ON gs.owner_user_service_id::int = ic.professor_id
     WHERE ic.professor_id = $1::int
-    GROUP BY ic.course_id, ic.course_name, ic.course_code, ic.department, ic.semester, ic.academic_year, gs.finalized`,
+    GROUP BY ic.course_id, ic.course_name, ic.course_code, ic.department, ic.semester, ic.academic_year, gs.finalized, gs.submission_id`,
     [instructorId]
     );
 
