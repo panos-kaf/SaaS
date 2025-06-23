@@ -6,6 +6,7 @@ type MessageType = 'success' | 'cancel' | 'error' | 'info';
 interface Message {
   type: MessageType;
   text: string;
+  duration?: number; // in milliseconds, optional
 }
 
 interface MessageContextType {
@@ -35,7 +36,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           type={message.type}
           text={message.text}
           onClose={clearMessage}
-          duration={3000}
+          duration={message.duration || 3000} // default duration 3000ms
         />
       )}
     </MessageContext.Provider>
