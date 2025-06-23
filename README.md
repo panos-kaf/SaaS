@@ -1,6 +1,11 @@
 # NTUA ECE SAAS 2025 PROJECT (saas-25-10)
 
-onomata
+Γεωργιος Γιαννακοπουλος
+Ιωαννης-Τσαμπικος Καντης
+Παναγιωτης Νεκταριος Κατσαλιφης
+Δεσποινα Χριστινα Μαρκατου
+Οδυσσεας-Αρθουρος-Ρηγας Τσουκνιδας
+Κωνσταντινος Φεζος
 
 ## Academic Grade Management System
 
@@ -8,7 +13,7 @@ This project implements a comprehensive microservices-based academic grade manag
 
 ## Architecture
 
-The system consists of six core microservices:
+The system consists of seven core microservices:
 
 1. **User Management Service** (Port 3001)
    - Handles user authentication and profile management
@@ -156,11 +161,3 @@ If you encounter issues:
 2. Verify all services are running: `docker-compose ps`
 3. Ensure all databases are initialized properly: `docker-compose exec <db_service_name> psql -U postgres -d <db_name> -c "\dt"`
 4. Check RabbitMQ is operational: Access the management UI at http://localhost:15672
-
-## Security Notes
-
-For production deployment, be sure to:
-1. Change all default passwords
-2. Use environment variables for sensitive information
-3. Implement TLS/SSL for service communication
-4. Set up proper network isolation
