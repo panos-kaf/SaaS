@@ -7,7 +7,7 @@ const UserManagementPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [userId, setUserId] = useState("");
+  const [userId, ] = useState("");
   const [mode, setMode] = useState<"create" | "update">("create");
 
   const { showMessage } = useMessage();
