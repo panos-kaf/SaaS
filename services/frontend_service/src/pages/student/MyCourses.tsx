@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { config } from '../../config';
+import { useMessage } from '../../components/Messages';
 
-const showMessage = ({ type, text }: { type: string; text: string }) => {
-  alert(`${type.toUpperCase()}: ${text}`);
-};
+const { showMessage } = useMessage();
 
 interface Course {
   id: number;
