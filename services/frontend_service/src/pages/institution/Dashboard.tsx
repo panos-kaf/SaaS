@@ -4,19 +4,20 @@ import { useMessage } from "../../components/Messages";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { config } from "../../config";
+import NewCourseModal from "../../components/RegisterCourseModal";
 
 const initialCourse = {
   course_code: "",
   course_name: "",
   department: "",
   semester: "",
-  academic_year: "",
   professor_id: "",
+  academic_year: "",
 };
 
 const InstitutionDashboard: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
-  const [course, setCourse] = useState(initialCourse);
+  const [, setCourse] = useState(initialCourse);
   const [students] = useState<string[]>([]);
   const [instructors, setInstructors] = useState<string[]>([]);
 
@@ -88,16 +89,14 @@ const InstitutionDashboard: React.FC = () => {
 
   const handleCloseModal = () => setShowModal(false);
 
-  const handleRegisterCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleRegisterCourse = async (courseData: typeof initialCourse) => {
     if (
-      !course.course_code ||
-      !course.course_name ||
-      !course.department ||
-      !course.semester ||
-      !course.academic_year ||
-      !course.professor_id
+      !courseData.course_code ||
+      !courseData.course_name ||
+      !courseData.department ||
+      !courseData.semester ||
+      !courseData.academic_year ||
+      !courseData.professor_id
     ) {
       showMessage({ type: "cancel", text: "Please fill in all fields." });
       return;
@@ -110,7 +109,7 @@ const InstitutionDashboard: React.FC = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ courses: [course] }),
+        body: JSON.stringify({ courses: [courseData] }),
       });
 
       const data = await response.json();
@@ -126,9 +125,11 @@ const InstitutionDashboard: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCourse({ ...course, [e.target.name]: e.target.value });
-  };
+  // const handleChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // ) => {
+  //     setCourse({ ...course, [e.target.name]: e.target.value });
+  //   };
 
   const [form, setForm] = useState({
     institutionName: "",
@@ -293,33 +294,10 @@ const InstitutionDashboard: React.FC = () => {
       </section>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-window">
-            <h3 className="modal-title">Register a New Course</h3>
-            <form className="modal-form" onSubmit={handleRegisterCourse}>
-              {Object.entries(initialCourse).map(([field, _]) => (
-                <label key={field} className="modal-label">
-                  {field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                  <input
-                    className="modal-input"
-                    name={field}
-                    value={(course as any)[field]}
-                    onChange={handleChange}
-                    required
-                  />
-                </label>
-              ))}
-              <div className="modal-actions">
-                <button type="button" className="modal-cancel" onClick={handleCloseModal}>
-                  Cancel
-                </button>
-                <button type="submit" className="modal-submit">
-                  Register
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <NewCourseModal
+          onSubmit={handleRegisterCourse}
+          onCancel={handleCloseModal}
+        />
       )}
 
       <section className="dashboard-panel credits-panel">
