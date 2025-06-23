@@ -29,7 +29,7 @@ grade_statistics_service
 
 ### Get Statistics
 
-- **Endpoint:** `/get-stats/<int:course_ID>`
+- **Endpoint:** `/stats/:courseId`
 - **Method:** GET
 - **Description:** Retrieves grade statistics for a specific course.
 - **Response:** A JSON object containing statistics or an error message.
