@@ -2,8 +2,6 @@ import { useState } from "react";
 import { config } from '../../config';
 import { useMessage } from '../../components/Messages';
 
-const { showMessage } = useMessage();
-
 interface Course {
   id: number;
   courseName: string;
@@ -14,6 +12,9 @@ interface Course {
 }
 
 const MyCourses = () => {
+
+  const { showMessage } = useMessage();
+
   const courses: Course[] = [
     { id: 1, courseName: "physics", examPeriod: "spring 2025", gradingStatus: "open", gradeID: 5, profID: 1 },
     { id: 2, courseName: "software", examPeriod: "fall 2024", gradingStatus: "open", gradeID: 5, profID: 2 },
