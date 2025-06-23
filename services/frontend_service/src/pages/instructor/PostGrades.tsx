@@ -10,11 +10,13 @@ const PostGradesPage: React.FC = () => {
         apiEndpoint="grade-submissions"
         title="Upload Grades Spreadsheet"
         submitButtonText="Submit Grades"
+        updateForm={false}
       />
       <GradeUploadForm
-        apiEndpoint="update-submissions"
+        apiEndpoint="grade-submissions"
         title="Update Existing Grades"
         submitButtonText="Update Grades"
+        updateForm={true}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { useMessage } from './Messages';
 import { config } from '../config';
@@ -7,6 +7,7 @@ interface GradeUploadFormProps {
   apiEndpoint: string;
   title?: string;
   submitButtonText?: string;
+  updateForm: boolean;
 }
 
 interface ParsedInfo {
@@ -16,10 +17,21 @@ interface ParsedInfo {
   entriesCount: number;
 }
 
+interface Course {
+  course_name: string;
+  course_code: string;
+  department: string;
+  semester: number;
+  academic_year: string;
+  submission_id: number;
+  finalized: boolean;
+}
+
 const GradeUploadForm: React.FC<GradeUploadFormProps> = ({
   apiEndpoint,
   title = "Upload Grades Spreadsheet",
   submitButtonText = "Submit",
+  updateForm = false,
 }) => {
   const { showMessage } = useMessage();
   const [file, setFile] = useState<File | null>(null);
@@ -76,35 +88,50 @@ const GradeUploadForm: React.FC<GradeUploadFormProps> = ({
     await parseFile(file);
   };
 
-  const handleConfirm = async () => {
-    if (!file) return;
+const handleConfirm = async () => {
+  if (!file) return;
 
-    const formData = new FormData();
-    formData.append('gradesFile', file);
+  const formData = new FormData();
+  formData.append('gradesFile', file);
 
-    try {
-      const response = await fetch(`${config.apiUrl}/post-grades/${apiEndpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: formData
-      });
+  let method: 'POST' | 'PUT';
+  let url: string;
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        showMessage({ type: 'success', text: 'Grades submitted successfully.' });
-        setParsedInfo(null);
-        setFile(null);
-      } else {
-        showMessage({ type: 'cancel', text: result.message || 'Upload failed.' });
-    } 
-    } catch (err) {
-      console.error('Upload error:', err);
-      showMessage({ type: 'cancel', text: 'An error occurred during upload.' });
+  try {
+    if (updateForm) {
+      if (!submissionId) {
+        showMessage({ type: 'cancel', text: 'Please select a course to update.' });
+        return;
+      }
+      url = `${config.apiUrl}/post-grades/${apiEndpoint}/${submissionId}`;
+      method = 'PUT';
+    } else {
+      url = `${config.apiUrl}/post-grades/${apiEndpoint}`;
+      method = 'POST';
     }
-  };
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      showMessage({ type: 'success', text: 'Grades submitted successfully.' });
+      setParsedInfo(null);
+      setFile(null);
+    } else {
+      showMessage({ type: 'cancel', text: result.message || 'Upload failed.' });
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    showMessage({ type: 'cancel', text: 'An error occurred during upload.' });
+  }
+};
 
   const handleCancel = () => {
     setParsedInfo(null);
@@ -112,40 +139,101 @@ const GradeUploadForm: React.FC<GradeUploadFormProps> = ({
     showMessage({ type: 'cancel', text: 'Grade submission cancelled.' });
   };
 
-  return (
-    <>
-      <form className="upload-container" onSubmit={handleSubmit}>
-        <h2 className="upload-header">{title}</h2>
-        <input
-          type="file"
-          accept=".xlsx,.csv"
-          onChange={handleFileChange}
-          className="upload-input"
-        />
-        <button type="submit" className="upload-button">
-          {submitButtonText}
-        </button>
-      </form>
 
-      {parsedInfo && (
-        <div className="confirm-tile">
-          <h3 className="confirm-header">Spreadsheet Info</h3>
-          <p className="confirm-info"><strong>Course Name:</strong> {parsedInfo.courseName}</p>
-          <p className="confirm-info"><strong>Course Code:</strong> {parsedInfo.courseCode}</p>
-          <p className="confirm-info"><strong>Period:</strong> {parsedInfo.period}</p>
-          <p className="confirm-info"><strong>Entries:</strong> {parsedInfo.entriesCount}</p>
-          <div className="flex gap-4 mt-4">
-            <button className="confirm-button" onClick={handleConfirm}>
-              Confirm and Submit Grades
-            </button>
-            <button className="cancel-button" onClick={handleCancel}>
-              Cancel
-            </button>
-          </div>
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submissionId, setSubmissionId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!updateForm) return;
+
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        const response = await fetch(`${config.apiUrl}/post-grades/get-courses`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch courses');
+        }
+
+        setCourses((data.courses || []).filter((c: Course) => !c.finalized));
+      } catch (error: any) {
+        console.error('Error fetching courses:', error);
+        showMessage({ type: 'cancel', text: error.message || 'Error occurred' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [updateForm]);
+
+return (
+  <>
+    <form className="upload-container" onSubmit={handleSubmit}>
+      <h2 className="upload-header">{title}</h2>
+
+      {updateForm && (
+        <div className="dropdown-container mt-4">
+          <label htmlFor="course-select" className="dropdown-label">
+            Select Course to Update:
+          </label>
+          <select
+            id="course-select"
+            className="dropdown-select w-full border border-gray-600 text-zinc-800 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={submissionId ?? ''}
+            onChange={(e) => setSubmissionId(parseInt(e.target.value))}
+          >
+            <option value="" disabled>Select a course</option>
+            {courses.filter(c => !c.finalized).map((course) => (
+              <option key={course.submission_id} value={course.submission_id}>
+                {course.course_name} ({course.academic_year})
+              </option>
+            ))}
+          </select>
         </div>
       )}
-    </>
-  );
-};
+      <br></br>
+      
+      <input
+        type="file"
+        accept=".xlsx,.csv"
+        onChange={handleFileChange}
+        className="upload-input"
+      />
+
+      <button type="submit" className="upload-button mt-4">
+        {submitButtonText}
+      </button>
+    </form>
+
+    {parsedInfo && (
+      <div className="confirm-tile">
+        <h3 className="confirm-header">Spreadsheet Info</h3>
+        <p className="confirm-info"><strong>Course Name:</strong> {parsedInfo.courseName}</p>
+        <p className="confirm-info"><strong>Course Code:</strong> {parsedInfo.courseCode}</p>
+        <p className="confirm-info"><strong>Period:</strong> {parsedInfo.period}</p>
+        <p className="confirm-info"><strong>Entries:</strong> {parsedInfo.entriesCount}</p>
+        <div className="flex gap-4 mt-4">
+          <button className="confirm-button" onClick={handleConfirm}>
+            Confirm and Submit Grades
+          </button>
+          <button className="cancel-button" onClick={handleCancel}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    )}
+  </>
+);
+}
 
 export default GradeUploadForm;
