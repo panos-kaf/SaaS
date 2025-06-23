@@ -373,7 +373,7 @@ async function getAvailableInstitutionCoursesByUser(userId) {
   try {
     // First get the institution_id of the user
     const userResult = await db.query(
-      'SELECT institution_id FROM users_profile WHERE user_profile_id = $1',
+      'SELECT institution_id FROM users_profile WHERE user_service_id = $1',
       [userId]
     );
 
