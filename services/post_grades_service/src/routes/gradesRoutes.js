@@ -75,7 +75,7 @@ router.delete(
 
 // POST /grade-submissions/:submission_id/finalize - Finalizes a grade submission
 router.post(
-  '/grade-submissions/:submission_id/finalize', 
+  '/finalize/:submission_id/', 
   gradesController.finalizeGradeSubmission
 );
 
