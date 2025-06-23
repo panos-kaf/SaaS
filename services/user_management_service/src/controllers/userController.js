@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 const config = require('../config/config');
 const { publisher } = require('../messaging/setup');
+const db = require('../database/db');
+const bcrypt = require('bcrypt');
 
 /**
  * User Controller for handling authentication operations
@@ -153,6 +155,57 @@ class UserController {
       });
     }
   }
+
+
+
+  async updatePassword (req, res) {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ success: false, message: "Email and new password are required." });
+    }
+
+    try {
+      // Check if user exists
+      const userResult = await db.query(
+        'SELECT id FROM users_credentials WHERE email = $1',
+        [email]
+      );
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: "User not found." });
+      }
+
+      const userId = userResult.rows[0].id;
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash(newPassword, salt);
+
+      // Update the password
+      await db.query(
+        `UPDATE users_credentials 
+        SET password_hash = $1, salt = $2, updated_at = NOW()
+        WHERE id = $3`,
+        [password_hash, salt, userId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Password updated successfully."
+      });
+
+    } catch (error) {
+      console.error("Error updating password:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update password.",
+        error: error.message
+      });
+    }
+  };
+
+
   
   /**
    * Get current user profile (requires authentication)

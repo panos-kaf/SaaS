@@ -89,8 +89,8 @@ class MessagingPublisher {
     try {
       // Create a message with the request data and add event metadata
       const message = {
-        ...request,
-        event: 'new_request_created',
+        event_type: 'request_created',
+        data: request,
         timestamp: new Date().toISOString()
       };
 

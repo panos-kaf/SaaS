@@ -15,10 +15,20 @@ const UserManagementPage = () => {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  if (!username || !password) {
-    showMessage({ type: "cancel", text: "All fields are required." });
-    return;
+  if (mode === "create") {
+    if (!username || !password || !userEmail || !userType) {
+      showMessage({ type: "cancel", text: "All fields are required for user creation." });
+      return;
+    }
   }
+
+  if (mode === "update") {
+    if (!userEmail || !password) {
+      showMessage({ type: "cancel", text: "Email and new password are required." });
+      return;
+    }
+  }
+
 
   try {
     if (mode === "create") {
@@ -45,6 +55,36 @@ const handleSubmit = async (e: React.FormEvent) => {
     } else {
       // Update user password logic here
       showMessage({ type: "success", text: "User password updated successfully." });
+    }
+
+    if (mode === "update") {
+      const response = await fetch(`${config.apiUrl}/users/update-pass`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          newPassword: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        showMessage({
+          type: "cancel",
+          text: data.message || "Failed to update password.",
+        });
+        return;
+      }
+
+      showMessage({
+        type: "success",
+        text: "User password updated successfully.",
+      });
+
+      return;
     }
   } catch (error) {
     showMessage({ type: "cancel", text: "An error occurred while submitting the form." });
@@ -123,5 +163,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     </div>
   );
 };
+
+
 
 export default UserManagementPage;

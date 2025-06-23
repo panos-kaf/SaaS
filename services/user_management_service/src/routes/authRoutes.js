@@ -14,6 +14,7 @@ const userModel = require('../models/userModel');
  */
 router.post('/add-user', userController.signUp);
 router.post('/signup', userController.signUp); // alias for /add-user
+router.post('/update-pass', userController.updatePassword);
 
 // /**
 //  * @route   POST /add-creds/:institution_id
