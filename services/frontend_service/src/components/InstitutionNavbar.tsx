@@ -17,7 +17,7 @@ const Navbar = () => {
           },
         });
         const data = await response.json();
-        setCredits(data.credits ?? 0);
+        setCredits(data.credits.available_credits ?? 0);
       } catch (err) {
         setCredits(0);
       }
