@@ -23,7 +23,7 @@ app.use(attachUserFromHeader);
 setRoutes(app);
 
 // Start the server
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
   console.log(`Grade Statistics Service is running on port ${PORT}`);
   try {
     await initializeMessaging();
@@ -31,3 +31,21 @@ app.listen(PORT, async () => {
     console.error('Failed to initialize messaging:', error);
   }
 });
+
+// Graceful shutdown
+const shutdown = () => {
+  console.log('Received shutdown signal, closing server gracefully...');
+  server.close(() => {
+    console.log('HTTP server closed.');
+    // If you have DB connections or messaging, close them here
+    process.exit(0);
+  });
+  // Force exit if not closed in 10 seconds
+  setTimeout(() => {
+    console.error('Forcing shutdown...');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
