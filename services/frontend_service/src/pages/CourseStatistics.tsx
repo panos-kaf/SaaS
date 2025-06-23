@@ -15,10 +15,14 @@ import {
 // Helper: counts of grades
 const histogram = (grades: number[]) => {
   const counts: Record<number, number> = {};
+
   for (const g of grades) counts[g] = (counts[g] || 0) + 1;
-  return Object.entries(counts)
-    .map(([grade, count]) => ({ grade: +grade, count }))
-    .sort((a, b) => a.grade - b.grade);
+
+  // Always include grades from 0 to 10
+  return Array.from({ length: 11 }, (_, grade) => ({
+    grade,
+    count: counts[grade] || 0,
+  }));
 };
 
 interface GradeRow {
@@ -44,7 +48,7 @@ interface CoursePeriodEntry {
 export default function CourseStatistics() {
 
     const [allCourses, setAllCourses] = useState<CoursePeriodEntry[]>([]); 
-    const [loadingCourses, setLoadingCourses] = useState(true);
+    const [, setLoadingCourses] = useState(true);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [sortField, setSortField] = useState<keyof CoursePeriodEntry>("courseCode");
@@ -162,7 +166,7 @@ useEffect(() => {
         <input
         type="text"
         className="statistics-search"
-        placeholder="Type course code or period"
+        placeholder="Search for a specific course"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         />
