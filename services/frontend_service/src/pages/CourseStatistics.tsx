@@ -34,6 +34,7 @@ interface GradeSheet {
 }
 
 interface CoursePeriodEntry {
+  courseID: string;
   courseName: string;
   courseCode: string;
   period: string;
@@ -61,11 +62,13 @@ export default function CourseStatistics() {
         })
         .then((res) => res.json())
         .then((data) => {
-          const mappedCourses = data.courses.map((c: any) => ({
-            courseName: c.course_name,
-            courseCode: c.course_code,
-            period: c.academic_year,
-            semester: c.semester,
+            const courses = data.courses; // Array of course objects
+            const mappedCourses = courses.map((c: any) => ({
+              courseID: c.course_id,
+              courseName: c.course_name,
+              courseCode: c.course_code,
+              period: c.academic_year,
+              semester: c.semester,
           }));
           setAllCourses(mappedCourses);
         })
@@ -96,27 +99,59 @@ const filteredAndSorted = allCourses
     partials: Record<string, number[]>;
     } | null>(null);
 
-    useEffect(() => {
-        if (!selectedEntry) return;
+useEffect(() => {
+    if (!selectedEntry) return;
 
-        // Replace this with a real fetch later
-        const mockResponse = {
-            count: 100,
-            total: Array.from({ length: 100 }, () => Math.floor(Math.random() * 11)), // random grades
-            partials: {
-            "Question 1": Array.from({ length: 100 }, () => Math.floor(Math.random() * 6)),
-            "Question 2": Array.from({ length: 100 }, () => Math.floor(Math.random() * 6)),
-            "Question 3": Array.from({ length: 100 }, () => Math.floor(Math.random() * 6)),
-            "Question 4": Array.from({ length: 100 }, () => Math.floor(Math.random() * 6)),
-            "Question 5": Array.from({ length: 100 }, () => Math.floor(Math.random() * 6)),
-            },
-        };
+    const fetchStatistics = async () => {
+        try {
+          const selectedCourseId = selectedEntry.courseID; // or from user selection
+            const response = await fetch(`${config.apiUrl}/grade-statistics/stats/${selectedCourseId}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error("Failed to fetch statistics");
+            }
 
-        // Simulate async fetch
-        setTimeout(() => {
-            setStatistics(mockResponse);
-        }, 500);
-    }, [selectedEntry]);
+            const data: {
+                course_id: string;
+                exam_period: string;
+                submission_date: string;
+                is_finalized: boolean;
+                course_name: string;
+                grade: string;
+                grade_count: string;
+            }[] = await response.json();
+
+            const total: number[] = [];
+            const count = data.reduce((acc, entry) => {
+                const grade = parseInt(entry.grade, 10);
+                const gradeCount = parseInt(entry.grade_count, 10);
+                if (!isNaN(grade) && !isNaN(gradeCount)) {
+                    for (let i = 0; i < gradeCount; i++) {
+                        total.push(grade);
+                    }
+                    return acc + gradeCount;
+                }
+                return acc;
+            }, 0);
+
+            setStatistics({
+                count,
+                total,
+                partials: {}, // Fill this when partial data is included in future
+            });
+        } catch (error) {
+            console.error("Error fetching statistics:", error);
+            setStatistics(null);
+        }
+    };
+
+    fetchStatistics();
+}, [selectedEntry]);
+
 
     return (
     <div className="statistics-container">
@@ -149,8 +184,8 @@ const filteredAndSorted = allCourses
                     }}
                 >
                     {{
-                    courseName: "CourseName",
-                    courseCode: "CourseCode",
+                    courseName: "Course Name",
+                    courseCode: "Course Code",
                     period: "Exam Period",
                     semester: "Semester",
                     }[field]}
@@ -160,8 +195,7 @@ const filteredAndSorted = allCourses
             </thead>
             <tbody>
             {filteredAndSorted.map((entry, idx) => {
-                const selected =
-                selectedEntry?.courseCode === entry.courseCode && selectedEntry?.period === entry.period;
+                const selected = selectedEntry?.courseID === entry.courseID;
                 return (
                 <tr
                     key={idx}
