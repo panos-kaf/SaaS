@@ -1,4 +1,16 @@
-# NTUA ECE SAAS 2025 PROJECT
+# NTUA ECE SAAS 2025 PROJECT (saas-25-10)
+
+Γεωργιος Γιαννακοπουλος
+
+Ιωαννης-Τσαμπικος Καντης
+
+Παναγιωτης Νεκταριος Κατσαλιφης
+
+Δεσποινα Χριστινα Μαρκατου
+
+Οδυσσεας-Αρθουρος-Ρηγας Τσουκνιδας
+
+Κωνσταντινος Φεζος
 
 ## Academic Grade Management System
 
@@ -6,19 +18,19 @@ This project implements a comprehensive microservices-based academic grade manag
 
 ## Architecture
 
-The system consists of six core microservices:
+The system consists of seven core microservices:
 
-1. **User Management Service** (Port 3007)
+1. **User Management Service** (Port 3001)
    - Handles user authentication and profile management
    - JWT token generation for service authentication
    - User profile propagation to other services via messaging
 
-2. **Post Grades Service** (Port 3002)
+2. **Post Grades Service** (Port 3004)
    - Enables professors to upload and manage grade submissions
    - Processes grade files and stores grade data
    - Publishes grade events to other services
 
-3. **Students Courses Service** (Port 3003)
+3. **Students Courses Service** (Port 3002)
    - Manages student course registrations
    - Provides grade information to students
    - Integrates with the grade submission system
@@ -33,10 +45,14 @@ The system consists of six core microservices:
    - Stores replies from both students and professors
    - Maintains conversation history
 
-6. **Grade Statistics Service** (Port 3004)
+6. **Grade Statistics Service** (Port 3003)
    - Calculates and provides statistical analysis of grades
    - Tracks metrics like average, minimum, maximum and standard deviation
    - Updates statistics when new grades are posted
+
+7. **Institution Service** (Port 3007)
+   - Manages institution-related data and operations
+   - Integrates with user and course management
 
 Each service maintains its own database for data isolation while sharing a common RabbitMQ messaging system for inter-service communication.
 
@@ -93,12 +109,15 @@ docker-compose up -d --build
 
 Once the system is running, you can access the services at:
 
-- User Management Service: http://localhost:3007
-- Post Grades Service: http://localhost:3002
-- Students Courses Service: http://localhost:3003
+- API Gateway: http://localhost:3000
+- Frontend: http://localhost:4000
+- User Management Service: http://localhost:3001
+- Post Grades Service: http://localhost:3004
+- Students Courses Service: http://localhost:3002
 - Requests Service: http://localhost:3005
 - Replies Service: http://localhost:3006
-- Grade Statistics Service: http://localhost:3004
+- Grade Statistics Service: http://localhost:3003
+- Institution Service: http://localhost:3007
 - RabbitMQ Management UI: http://localhost:15672 (username: guest, password: guest)
 
 ## Health Check Endpoints
@@ -124,6 +143,7 @@ Each service has its own PostgreSQL database:
 - Replies DB: Port 5436
 - Students Courses DB: Port 5434
 - Grade Statistics DB: Port 5438
+- Institution DB: Port 5439
 
 You can connect to these databases using any PostgreSQL client with the following credentials:
 - Username: postgres
@@ -136,7 +156,7 @@ You can connect to these databases using any PostgreSQL client with the followin
 The services communicate through a centralized RabbitMQ instance:
 - The RabbitMQ management interface is available at http://localhost:15672
 - Default credentials: guest/guest
-- AMQP port: 5672
+- AMQP port: 5673
 
 ## Troubleshooting
 
@@ -146,15 +166,3 @@ If you encounter issues:
 2. Verify all services are running: `docker-compose ps`
 3. Ensure all databases are initialized properly: `docker-compose exec <db_service_name> psql -U postgres -d <db_name> -c "\dt"`
 4. Check RabbitMQ is operational: Access the management UI at http://localhost:15672
-
-## Security Notes
-
-For production deployment, be sure to:
-1. Change all default passwords
-2. Use environment variables for sensitive information
-3. Implement TLS/SSL for service communication
-4. Set up proper network isolation
-
-## Team
-
-TEAM (XX)
