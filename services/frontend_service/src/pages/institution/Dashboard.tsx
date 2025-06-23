@@ -28,6 +28,8 @@ const InstitutionDashboard: React.FC = () => {
   const [studentSearch, setStudentSearch] = useState("");
   const [instructorSearch, setInstructorSearch] = useState("");
 
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
@@ -50,6 +52,27 @@ const InstitutionDashboard: React.FC = () => {
     };
     fetchInstructors();
   }, [showMessage]);
+
+  useEffect(() => {
+    // Check if institution is registered (e.g. by checking credits)
+    const checkRegistration = async () => {
+      try {
+        const response = await fetch(`${config.apiUrl}/institution/view-creds/1`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        });
+        if (response.ok) {
+          setIsRegistered(true);
+        } else {
+          setIsRegistered(false);
+        }
+      } catch {
+        setIsRegistered(false);
+      }
+    };
+    checkRegistration();
+  }, []);
 
   const filteredStudents = students.filter((s) =>
     s.toLowerCase().includes(studentSearch.toLowerCase())
@@ -106,6 +129,154 @@ const InstitutionDashboard: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCourse({ ...course, [e.target.name]: e.target.value });
   };
+
+  const [form, setForm] = useState({
+    institutionName: "",
+    institutionEmail: "",
+    contactPerson: "",
+    contactEmail: "",
+    institutionAddress: "",
+    contactPhone: "",
+  });
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Validate required fields
+    if (
+      !form.institutionName.trim() ||
+      !form.institutionEmail.trim() ||
+      !form.contactPerson.trim() ||
+      !form.contactEmail.trim()
+    ) {
+      showMessage({ type: "cancel", text: "Please fill in all required fields." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${config.apiUrl}/institution/add-inst`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          institution_name: form.institutionName,
+          institution_email: form.institutionEmail,
+          institution_address: form.institutionAddress,
+          contact_person: form.contactPerson,
+          contact_email: form.contactEmail,
+          contact_phone: form.contactPhone,
+        }),
+      });
+      if (response.ok) {
+        showMessage({ type: "success", text: "Institution registered successfully!" });
+        setIsRegistered(true);
+      } else {
+        showMessage({ type: "cancel", text: "Failed to register institution." });
+      }
+    } catch {
+      showMessage({ type: "error", text: "Error registering institution." });
+    }
+    setSubmitting(false);
+  };
+
+  const handleChangeForm = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  if (isRegistered === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isRegistered) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <form
+          className="bg-white dark:bg-gray-900 p-8 rounded shadow-md w-full max-w-md space-y-4"
+          onSubmit={handleRegister}
+        >
+          <h2 className="text-xl font-bold mb-2">Register Institution</h2>
+          <div>
+            <label className="block font-medium mb-1">
+              Institution Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full px-3 py-2 text-neutral-800 border rounded"
+              name="institutionName"
+              value={form.institutionName}
+              onChange={handleChangeForm}
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">
+              Institution Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full px-3 py-2 text-neutral-800 border rounded"
+              name="institutionEmail"
+              type="email"
+              value={form.institutionEmail}
+              onChange={handleChangeForm}
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">
+              Contact Person <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full px-3 py-2 text-neutral-800 border rounded"
+              name="contactPerson"
+              value={form.contactPerson}
+              onChange={handleChangeForm}
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">
+              Contact Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full px-3 py-2 text-neutral-800 border rounded"
+              name="contactEmail"
+              type="email"
+              value={form.contactEmail}
+              onChange={handleChangeForm}
+              required
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">Institution Address</label>
+            <input
+              className="w-full px-3 py-2 text-neutral-800 border rounded"
+              name="institutionAddress"
+              value={form.institutionAddress}
+              onChange={handleChangeForm}
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">Contact Phone</label>
+            <input
+              className="w-full px-3 py-2 text-neutral-800 border rounded"
+              name="contactPhone"
+              value={form.contactPhone}
+              onChange={handleChangeForm}
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded font-semibold mt-2"
+            disabled={submitting}
+          >
+            {submitting ? "Registering..." : "Register Institution"}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <main className="dashboard-container">
