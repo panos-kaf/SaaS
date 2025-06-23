@@ -6,7 +6,16 @@ const PostGradesPage: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold text-center mb-6">Post Grades</h1>
-      <GradeUploadForm />
+      <GradeUploadForm
+        apiEndpoint="grade-submissions"
+        title="Upload Grades Spreadsheet"
+        submitButtonText="Submit Grades"
+      />
+      <GradeUploadForm
+        apiEndpoint="update-submissions"
+        title="Update Existing Grades"
+        submitButtonText="Update Grades"
+      />
     </div>
   );
 };

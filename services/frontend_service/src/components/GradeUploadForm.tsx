@@ -3,6 +3,11 @@ import * as XLSX from 'xlsx';
 import { useMessage } from './Messages';
 import { config } from '../config';
 
+interface GradeUploadFormProps {
+  apiEndpoint: string;
+  title?: string;
+  submitButtonText?: string;
+}
 
 interface ParsedInfo {
   courseName: string;
@@ -11,7 +16,11 @@ interface ParsedInfo {
   entriesCount: number;
 }
 
-const GradeUploadForm: React.FC = () => {
+const GradeUploadForm: React.FC<GradeUploadFormProps> = ({
+  apiEndpoint,
+  title = "Upload Grades Spreadsheet",
+  submitButtonText = "Submit",
+}) => {
   const { showMessage } = useMessage();
   const [file, setFile] = useState<File | null>(null);
   const [parsedInfo, setParsedInfo] = useState<ParsedInfo | null>(null);
@@ -74,7 +83,7 @@ const GradeUploadForm: React.FC = () => {
     formData.append('gradesFile', file);
 
     try {
-      const response = await fetch(`${config.apiUrl}/post-grades/grade-submissions`, {
+      const response = await fetch(`${config.apiUrl}/post-grades/${apiEndpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
@@ -97,7 +106,6 @@ const GradeUploadForm: React.FC = () => {
     }
   };
 
-
   const handleCancel = () => {
     setParsedInfo(null);
     setFile(null);
@@ -107,7 +115,7 @@ const GradeUploadForm: React.FC = () => {
   return (
     <>
       <form className="upload-container" onSubmit={handleSubmit}>
-        <h2 className="upload-header">Upload Grades Spreadsheet</h2>
+        <h2 className="upload-header">{title}</h2>
         <input
           type="file"
           accept=".xlsx,.csv"
@@ -115,7 +123,7 @@ const GradeUploadForm: React.FC = () => {
           className="upload-input"
         />
         <button type="submit" className="upload-button">
-          Submit
+          {submitButtonText}
         </button>
       </form>
 
