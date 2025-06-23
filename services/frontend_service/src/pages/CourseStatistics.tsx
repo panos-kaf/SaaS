@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+import { config } from "../config";
+
 import {
   BarChart,
   Bar,
@@ -32,71 +34,48 @@ interface GradeSheet {
 }
 
 interface CoursePeriodEntry {
-  course: string;
+  courseCode: string;
+  courseName: string;
   period: string;
-  initialDate: string;
-  finalDate: string;
+  semester: string;
 }
 
 export default function CourseStatistics() {
 
-    // Mock data
-    const allCourses: CoursePeriodEntry[] = [
-    {
-        course: "CS101",
-        period: "Midterm 2024",
-        initialDate: "2024-03-01",
-        finalDate: "2024-04-01",
-    },
-    {
-        course: "CS101",
-        period: "Final 2023",
-        initialDate: "2023-05-01",
-        finalDate: "2023-06-01",
-    },
-    {
-        course: "AS102",
-        period: "Midterm 2024",
-        initialDate: "2024-03-02",
-        finalDate: "2024-04-02",
-    },
-    {
-        course: "CS102",
-        period: "Final 2023",
-        initialDate: "2023-05-02",
-        finalDate: "2023-06-02",
-    },
-    {
-        course: "CS103",
-        period: "Midterm 2024",
-        initialDate: "2024-03-03",
-        finalDate: "2024-04-03",
-    },
-    {
-        course: "AS103",
-        period: "Final 2023",
-        initialDate: "2023-05-03",
-        finalDate: "2023-06-03",
-    },
-    {
-        course: "AS104",
-        period: "Midterm 2024",
-        initialDate: "2024-03-04",
-        finalDate: "2024-04-04",
-    }
-    // Add more entries...
-    ];  
+    const [allCourses, setAllCourses] = useState<CoursePeriodEntry[]>([]); 
+    const [loadingCourses, setLoadingCourses] = useState(true);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortField, setSortField] = useState<keyof CoursePeriodEntry>("course");
+    const [sortField, setSortField] = useState<keyof CoursePeriodEntry>("courseCode");
     const [sortAsc, setSortAsc] = useState(true);
     const [selectedEntry, setSelectedEntry] = useState<CoursePeriodEntry | null>(null);
 
     const [gradeSheets] = useState<GradeSheet[]>([]);
 
+    useEffect(() => {
+      fetch(`${config.apiUrl}/student-courses/courses`,
+        {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        })
+        .then((res) => res.json())
+        .then((data) => {
+          const mappedCourses = data.courses.map((c: any) => ({
+            courseName: c.course_name,
+            courseCode: c.course_code,
+            period: c.academic_year,
+            semester: c.semester,
+          }));
+          setAllCourses(mappedCourses);
+        })
+        .catch((err) => console.error("Failed to fetch courses:", err))
+        .finally(() => setLoadingCourses(false));
+    }, []);
+
     const filteredAndSorted = allCourses
     .filter((entry) =>
-    `${entry.course} ${entry.period}`
+    `${entry.courseName} ${entry.period}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     )
@@ -154,7 +133,7 @@ export default function CourseStatistics() {
         <table className="statistics-table w-full text-sm">
             <thead className="statistics-thead">
             <tr>
-                {(["course", "period", "initialDate", "finalDate"] as const).map((field) => (
+                {(["courseCode", "courseName", "period", "semester"] as const).map((field) => (
                 <th
                     key={field}
                     className="statistics-th statistics-header-clickable"
@@ -167,10 +146,10 @@ export default function CourseStatistics() {
                     }}
                 >
                     {{
-                    course: "Course",
+                    courseCode: "CourseCode",
+                    courseName: "CourseName",
                     period: "Exam Period",
-                    initialDate: "Initial Grades Submission",
-                    finalDate: "Final Grades Submission",
+                    semester: "Semester",
                     }[field]}
                 </th>
                 ))}
@@ -179,7 +158,7 @@ export default function CourseStatistics() {
             <tbody>
             {filteredAndSorted.map((entry, idx) => {
                 const selected =
-                selectedEntry?.course === entry.course && selectedEntry?.period === entry.period;
+                selectedEntry?.courseCode === entry.courseCode && selectedEntry?.period === entry.period;
                 return (
                 <tr
                     key={idx}
@@ -188,10 +167,10 @@ export default function CourseStatistics() {
                     }`}
                     onClick={() => setSelectedEntry(entry)}
                 >
-                    <td className="statistics-td">{entry.course}</td>
+                    <td className="statistics-td">{entry.courseName}</td>
+                    <td className="statistics-td">{entry.courseCode}</td>
                     <td className="statistics-td">{entry.period}</td>
-                    <td className="statistics-td">{entry.initialDate}</td>
-                    <td className="statistics-td">{entry.finalDate}</td>
+                    <td className="statistics-td">{entry.semester}</td>
                 </tr>
                 );
             })}
