@@ -141,7 +141,7 @@ const handleConfirm = async () => {
 
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [submissionId, setSubmissionId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -202,7 +202,7 @@ return (
         </div>
       )}
       <br></br>
-      
+
       <input
         type="file"
         accept=".xlsx,.csv"
