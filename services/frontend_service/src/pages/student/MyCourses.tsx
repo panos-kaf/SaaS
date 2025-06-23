@@ -18,7 +18,7 @@ const MyCourses = () => {
   const courses: Course[] = [
     { id: 1, courseName: "physics", examPeriod: "spring 2025", gradingStatus: "open", gradeID: 5, profID: 1 },
     { id: 2, courseName: "software", examPeriod: "fall 2024", gradingStatus: "open", gradeID: 5, profID: 2 },
-    { id: 3, courseName: "mathematics", examPeriod: "fall 2024", gradingStatus: "closed", gradeID: 3, profID: 3 }
+    { id: 3, courseName: "mathematics", examPeriod: "fall 2024", gradingStatus: "open", gradeID: 3, profID: 3 }
   ];
 
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
