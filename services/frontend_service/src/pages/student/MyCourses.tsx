@@ -7,11 +7,13 @@ interface Course {
   courseName: string;
   examPeriod: string;
   gradingStatus: string;
-  grade: number;
-  profID: number;
+  grade: number | null;
+  profID: number | null;
+  gradeID: number | null;
   courseCode: string;
   department: string;
 }
+
 
 interface InstitutionCourse {
   id: number;
@@ -38,19 +40,8 @@ const MyCourses = () => {
         });
         const data = await res.json();
 
-        const transformedCourses: Course[] = (data.courses || []).map((c: any) => ({
-          id: c.course_id,
-          courseName: c.course_name,
-          examPeriod: c.semester ?? "N/A",
-          gradingStatus: "open", // ή υπολόγισε βάση grade === null
-          grade: c.grade ?? null,
-          profID: c.professor_id ?? null,
-          courseCode: c.course_code,
-          department: c.department,
-        }));
+        setCourses(data.courses || []);
 
-
-        setCourses(transformedCourses);
       } catch (err) {
         console.error("Error loading courses:", err);
         showMessage({ type: "cancel", text: "Failed to load your courses." });

@@ -14,7 +14,9 @@ class CoursesController {
    */
   async getCourses(req, res) {
     try {
+      
       const userId = req.user.id;
+      console.log(" user.id from token:", userId);
       const courses = await getCoursesByUserId(userId);
 
       if (courses.length === 0) {

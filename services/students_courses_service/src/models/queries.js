@@ -16,16 +16,17 @@ async function getCoursesByUserId(userProfileId) {
         c.semester AS "examPeriod",
         g.grade AS "grade",
         g.submitted_by AS "profID",
-        CASE
-          WHEN g.grade IS NULL THEN 'open'
-          ELSE 'closed'
-        END AS "gradingStatus"
-      FROM student_courses sc
+        g.grade_id AS "gradeID",   
+        'open' AS "gradingStatus"
+      FROM users_profile u
+      JOIN student_courses sc ON u.user_profile_id = sc.user_profile_id
       JOIN courses c ON sc.course_id = c.course_id
-      LEFT JOIN grades g ON g.user_profile_id = sc.user_profile_id AND g.course_id = c.course_id
-      WHERE sc.user_profile_id = $1
+      LEFT JOIN grades g ON g.user_profile_id = u.user_profile_id AND g.course_id = c.course_id
+      WHERE u.user_service_id = $1
       ORDER BY c.course_name
     `, [userProfileId]);
+
+
 
     return result.rows;
   } catch (error) {
