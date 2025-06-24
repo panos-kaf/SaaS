@@ -64,9 +64,11 @@ const deleteRequest = async (req, res) => {
 
 // Retrieve all requests for a specific user (student or professor)
 const getRequestsByUser = async (req, res) => {
-  const userID = req.user && req.user.id ? req.user.id : 1;
-  const role = req.user && req.user.role ? req.user.role : 'student';
+  const userID = req.user && req.user.id;
+  const role = req.user && req.user.role;
+  const courseID = req.query.course_id;
   console.log('Role from token:', role);
+  console.log('userID:', userID, 'courseID:', courseID);
 
   try {
     let result;
@@ -86,17 +88,58 @@ const getRequestsByUser = async (req, res) => {
         [userID]
       );
     } else {
-      result = await db.query(
-        'SELECT * FROM requests WHERE owner_id = $1 ORDER BY timestamp DESC',
-        [userID]
-      );
+    if (!courseID) {
+            return res.status(400).json({ error: "Missing course_id" });
+          }
+
+          result = await db.query(
+            `SELECT * FROM requests
+            WHERE owner_id = $1 AND grade_id IN (
+              SELECT grades_id FROM grades WHERE course_id = $2
+            )
+            ORDER BY timestamp DESC LIMIT 1`,
+            [userID, courseID]
+          );
+        }
+
+        return res.status(200).json({ requests: result.rows });
+      } catch (error) {
+        console.error('Error retrieving requests:', error);
+        return res.status(500).json({ error: 'Failed to retrieve requests', detail: error.message });
+      }
+    };
+
+const getStudentRequestForCourse = async (req, res) => {
+  const userID = req.headers['x-user-id']; // Από gateway
+  const courseID = req.query.course_id;
+  console.log("User ID:", userID, "Course ID:", courseID);
+
+  if (!userID || !courseID) {
+    return res.status(400).json({ error: "Missing user ID or course ID" });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT * FROM requests
+       WHERE owner_id = $1 AND grade_id IN (
+         SELECT grade_id FROM grades WHERE course_id = $2
+       )
+       ORDER BY timestamp DESC LIMIT 1`,
+      [userID, courseID]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No request found' });
     }
-    return res.status(200).json({ requests: result.rows });
-  } catch (error) {
-    console.error('Error retrieving requests:', error);
-    return res.status(500).json({ error: 'Failed to retrieve requests', detail: error.message });
+
+    return res.status(200).json({ request: result.rows[0] });
+  } catch (err) {
+    console.error('Error fetching student request:', err);
+    return res.status(500).json({ error: 'Server error' });
   }
 };
+
+
 
 
 
@@ -137,5 +180,6 @@ module.exports = {
   createRequest,
   deleteRequest,
   getRequestsByUser,
-  closeRequest
+  closeRequest,
+  getStudentRequestForCourse
 };

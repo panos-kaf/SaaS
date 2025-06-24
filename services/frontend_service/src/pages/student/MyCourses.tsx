@@ -39,7 +39,7 @@ const MyCourses = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-
+        console.log("Fetched student courses:", data.courses);
         setCourses(data.courses || []);
 
       } catch (err) {
@@ -107,7 +107,7 @@ const MyCourses = () => {
       return;
     }
 
-    const { id: courseID, grade, profID } = selectedCourse;
+    const { id: courseID, grade, profID, gradeID } = selectedCourse;
 
     try {
       const res = await fetch(`${config.apiUrl}/requests/post-request/${courseID}`, {
@@ -116,7 +116,7 @@ const MyCourses = () => {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ requestBody: reviewMessage, grade, profID }),
+        body: JSON.stringify({ requestBody: reviewMessage, grade, profID, gradeID }),
       });
 
       const result = await res.json();
@@ -138,9 +138,10 @@ const MyCourses = () => {
     try {
       const token = localStorage.getItem("token") || "";
 
-      const reqRes = await fetch(`${config.apiUrl}/requests/my-request?course_id=${course.id}`, {
+      const reqRes = await fetch(`${config.apiUrl}/requests/my-requests?course_id=${course.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
 
       if (!reqRes.ok) {
         setInstructorReply(null);
@@ -149,7 +150,12 @@ const MyCourses = () => {
       }
 
       const reqData = await reqRes.json();
-      const requestID = reqData?.request?.request_id;
+      console.log("Request data:", reqData);
+      const requestID = reqData?.requests?.[0]?.request_id;
+
+      //debugging
+      const userID = reqData?.requests?.[0]?.owner_id;
+      console.log("Request owner_id (user_id):", userID);
 
       if (!requestID) {
         setInstructorReply(null);
@@ -163,6 +169,7 @@ const MyCourses = () => {
 
       const replyData = await replyRes.json();
       setInstructorReply(replyData?.data?.[0]?.reply_body ?? "");
+      console.log(replyData)
 
       setViewStatusCourse(course);
       setSelectedCourse(null);
@@ -252,7 +259,123 @@ const MyCourses = () => {
         </tbody>
       </table>
 
-      {/* rest of the UI remains unchanged */}
+      {selectedCourse && (
+        <div className="mt-6 p-4 bg-gray-700 rounded">
+          <h3 className="text-xl font-semibold mb-2">
+            NEW REVIEW REQUEST – {selectedCourse.courseName} – {selectedCourse.examPeriod}
+          </h3>
+          <textarea
+            className="w-full p-2 rounded text-black"
+            rows={4}
+            placeholder="Message to instructor"
+            value={reviewMessage}
+            onChange={(e) => setReviewMessage(e.target.value)}
+          ></textarea>
+          <div className="mt-3 flex gap-2">
+            <button
+              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white"
+              onClick={handleSubmitReview}
+            >
+              Submit grade review request
+            </button>
+            <button
+              className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded text-white"
+              onClick={() => {
+                setSelectedCourse(null);
+                setReviewMessage("");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {viewStatusCourse && (
+        <div className="mt-6 p-4 bg-gray-600 rounded">
+          <h3 className="text-xl font-semibold mb-2">
+            REVIEW REQUEST STATUS – {viewStatusCourse.courseName} – {viewStatusCourse.examPeriod}
+          </h3>
+          <label className="block mb-1 font-semibold">Message FROM instructor</label>
+          <textarea
+            className="w-full p-2 rounded text-black"
+            rows={4}
+            readOnly
+            value={instructorReply || "No reply yet"}
+          ></textarea>
+          <div className="mt-3 flex gap-2">
+            <button className="bg-gray-400 hover:bg-gray-500 px-4 py-2 rounded text-white">
+              Download attachment
+            </button>
+            <button
+              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white"
+              onClick={() => setViewStatusCourse(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {gradeViewCourse && (
+        <div className="mt-6 p-4 bg-gray-700 rounded">
+          <h3 className="text-xl font-semibold mb-4">
+            my grades – {gradeViewCourse.courseName} – {gradeViewCourse.examPeriod}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-800 p-4 rounded">
+              <p className="font-semibold mb-2">Total</p>
+              <input
+                className="w-full p-2 rounded text-black"
+                type="text"
+                value="8.5"
+                readOnly
+              />
+              <p className="font-semibold mt-2">Q1</p>
+              <input
+                className="w-full p-2 rounded text-black"
+                type="text"
+                value="9"
+                readOnly
+              />
+              <p className="font-semibold mt-2">Q2</p>
+              <input
+                className="w-full p-2 rounded text-black"
+                type="text"
+                value="7"
+                readOnly
+              />
+              <p className="font-semibold mt-2">Q3</p>
+              <input
+                className="w-full p-2 rounded text-black"
+                type="text"
+                value="9.5"
+                readOnly
+              />
+            </div>
+            <div className="bg-gray-800 p-4 rounded">
+              <p className="font-semibold mb-2">physics – spring 2025 – total</p>
+              <div className="h-40 bg-white text-black flex items-center justify-center">
+                ΤΑΞΙΝΟΜΗΣΗ ΒΑΘΜΩΝ (Mock Graph)
+              </div>
+            </div>
+            <div className="bg-gray-800 p-4 rounded">
+              <p className="font-semibold mb-2">physics – spring 2025 – Q1</p>
+              <div className="h-40 bg-white text-black flex items-center justify-center">
+                Q1 (Mock Graph)
+              </div>
+            </div>
+            <div className="col-span-full flex justify-end">
+              <button
+                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white"
+                onClick={() => setGradeViewCourse(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

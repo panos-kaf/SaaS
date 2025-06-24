@@ -44,9 +44,16 @@ router.delete(
 // View requests for a user
 router.get(
   '/view-requests',
-  authenticateJWT, // <--- commented out for testing
+  //authenticateJWT, // <--- commented out for testing
   requestsController.getRequestsByUser
 );
+
+router.get(
+  '/my-request',
+  //authenticateJWT,
+  requestsController.getStudentRequestForCourse
+);
+
 
 // Close a request
 router.post(
