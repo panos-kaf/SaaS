@@ -11,15 +11,4 @@
 - το αρχείο μεταδεδομένων
 - το σύνολο του διαλόγου (prompts & answers) με το εργαλείο
 
-Currently 5 Coding, 3 Design, 2 Architecture
-
-++ desp: 6 arch, 6 design, 4 coding, 4 deployment
-
-gia: 8 arch , 2 coding
-
-update: +4 coding +2 design +2 architecture +2 demployment
-update: +5 design +4 coding +1 deployment
-
-+4 coding, 3 design, 3 deploy
-
 Δείτε το video: https://youtu.be/eUAjxCRNODU
