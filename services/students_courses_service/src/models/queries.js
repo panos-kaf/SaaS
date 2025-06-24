@@ -8,19 +8,32 @@ const db = require('../db/db');
 async function getCoursesByUserId(userProfileId) {
   try {
     const result = await db.query(`
-      SELECT c.course_id, c.course_code, c.course_name, c.department, c.semester
+      SELECT
+        c.course_id AS id,
+        c.course_code,
+        c.course_name AS "courseName",
+        c.department,
+        c.semester AS "examPeriod",
+        g.grade AS "grade",
+        g.submitted_by AS "profID",
+        CASE
+          WHEN g.grade IS NULL THEN 'open'
+          ELSE 'closed'
+        END AS "gradingStatus"
       FROM student_courses sc
       JOIN courses c ON sc.course_id = c.course_id
+      LEFT JOIN grades g ON g.user_profile_id = sc.user_profile_id AND g.course_id = c.course_id
       WHERE sc.user_profile_id = $1
       ORDER BY c.course_name
     `, [userProfileId]);
-    
+
     return result.rows;
   } catch (error) {
     console.error('Error getting courses for user:', error);
     throw error;
   }
 }
+
 
 /**
  * Add a course for a specific user/student
