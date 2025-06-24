@@ -39,7 +39,8 @@ class CoursesController {
    */
   async addCourse(req, res) {
     try {
-      const userId = req.body.studentId;
+      const userId = req.user.id;
+      console.log("➡️ userId from token:", userId);
       const courseId = parseInt(req.params.course_ID);
       
       if (!userId || isNaN(courseId)) {

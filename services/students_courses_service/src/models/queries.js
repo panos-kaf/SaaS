@@ -28,48 +28,73 @@ async function getCoursesByUserId(userProfileId) {
  * @param {number} courseId - The course ID
  * @returns {Promise<Object>} - Result of the operation
  */
-async function addCourseForUser(userProfileId, courseId) {
+async function addCourseForUser(userServiceId, institutionCourseId) {
   try {
-    // First, check if the course exists in the institution_courses table
-    const courseCheck = await db.query('SELECT course_id FROM institution_courses WHERE course_id = $1', [courseId]);
-    
-    if (courseCheck.rows.length === 0) {
-      throw new Error('Course not found in available institution courses');
+    // 1. Πάρε το course_code από τον πίνακα institution_courses
+    const institutionRes = await db.query(
+      'SELECT course_code FROM institution_courses WHERE course_id = $1',
+      [institutionCourseId]
+    );
+
+    if (institutionRes.rows.length === 0) {
+      throw new Error('Course not found in institution_courses');
     }
-    
-    // Check if the user profile exists
-    const userCheck = await db.query('SELECT user_profile_id FROM users_profile WHERE user_profile_id = $1', [userProfileId]);
-    
-    if (userCheck.rows.length === 0) {
+
+    const courseCode = institutionRes.rows[0].course_code;
+
+    // 2. Βρες το course_id από τον πίνακα courses με βάση το course_code
+    const courseRes = await db.query(
+      'SELECT course_id FROM courses WHERE course_code = $1',
+      [courseCode]
+    );
+
+    if (courseRes.rows.length === 0) {
+      throw new Error('Course not found in courses');
+    }
+
+    const courseId = courseRes.rows[0].course_id;
+
+    // 3. Βρες το user_profile_id από τον πίνακα users_profile μέσω user_service_id
+    const userRes = await db.query(
+      'SELECT user_profile_id FROM users_profile WHERE user_service_id = $1',
+      [userServiceId]
+    );
+
+    if (userRes.rows.length === 0) {
       throw new Error('User not found');
     }
-    
-    // Check if the user already has this course
-    const existingRegistration = await db.query(
+
+    const userProfileId = userRes.rows[0].user_profile_id;
+
+    // 4. Έλεγξε αν έχει ήδη δηλωθεί το μάθημα
+    const existingRes = await db.query(
       'SELECT registration_id FROM student_courses WHERE user_profile_id = $1 AND course_id = $2',
       [userProfileId, courseId]
     );
-    
-    if (existingRegistration.rows.length > 0) {
-      // User already registered for this course
+
+    if (existingRes.rows.length > 0) {
       return { registered: false, message: 'Already registered for this course' };
     }
-    
-    // Add the course for the user
-    const result = await db.query(
+
+    // 5. Κάνε την εισαγωγή
+    const insertRes = await db.query(
       'INSERT INTO student_courses (user_profile_id, course_id) VALUES ($1, $2) RETURNING registration_id',
       [userProfileId, courseId]
     );
-    
-    return { 
-      registered: true, 
-      registrationId: result.rows[0].registration_id 
+
+    return {
+      registered: true,
+      registrationId: insertRes.rows[0].registration_id
     };
+
   } catch (error) {
     console.error('Error adding course for user:', error);
     throw error;
   }
 }
+
+
+
 
 /**
  * Get the grade for a specific user and course
