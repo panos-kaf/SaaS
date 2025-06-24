@@ -14,10 +14,18 @@ interface Course {
   department: string;
 }
 
-
 interface InstitutionCourse {
   id: number;
   name: string;
+}
+
+function getUserIdFromToken(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.id || null;
+  } catch {
+    return null;
+  }
 }
 
 const MyCourses = () => {
@@ -39,15 +47,12 @@ const MyCourses = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        console.log("Fetched student courses:", data.courses);
         setCourses(data.courses || []);
-
       } catch (err) {
         console.error("Error loading courses:", err);
         showMessage({ type: "cancel", text: "Failed to load your courses." });
       }
     };
-
 
     const fetchInstitutionCourses = async () => {
       try {
@@ -137,11 +142,14 @@ const MyCourses = () => {
   const handleViewStatusClick = async (course: Course) => {
     try {
       const token = localStorage.getItem("token") || "";
+      const userID = getUserIdFromToken(token);
 
-      const reqRes = await fetch(`${config.apiUrl}/requests/my-requests?course_id=${course.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const reqRes = await fetch(`${config.apiUrl}/requests/my-request?course_id=${course.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-user-id": userID ?? "1"
+        },
       });
-
 
       if (!reqRes.ok) {
         setInstructorReply(null);
@@ -150,12 +158,7 @@ const MyCourses = () => {
       }
 
       const reqData = await reqRes.json();
-      console.log("Request data:", reqData);
-      const requestID = reqData?.requests?.[0]?.request_id;
-
-      //debugging
-      const userID = reqData?.requests?.[0]?.owner_id;
-      console.log("Request owner_id (user_id):", userID);
+      const requestID = reqData?.request?.request_id;
 
       if (!requestID) {
         setInstructorReply(null);
@@ -169,7 +172,6 @@ const MyCourses = () => {
 
       const replyData = await replyRes.json();
       setInstructorReply(replyData?.data?.[0]?.reply_body ?? "");
-      console.log(replyData)
 
       setViewStatusCourse(course);
       setSelectedCourse(null);

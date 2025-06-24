@@ -140,7 +140,7 @@ const getRepliesForRequest = async (req, res) => {
        JOIN users_profile u ON r.user_id = u.user_service_id
        WHERE r.request_id = $1
        ORDER BY r.timestamp ASC`,
-      [requestID]
+      [requestID.toString()]
     );
     
     return res.status(200).json({
