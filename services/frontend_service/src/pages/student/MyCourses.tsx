@@ -80,7 +80,7 @@ const MyCourses = () => {
 
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${config.apiUrl}/student-courses/add-course`, {
+      const res = await fetch(`${config.apiUrl}/student-courses/add-course/${selectedToAdd}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
