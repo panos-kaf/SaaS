@@ -55,8 +55,8 @@ services:
       - JWT_SECRET=jwt_secret
       - JWT_EXPIRATION=24h
       - RABBITMQ_URL=amqp://rabbitmq:5672
-      - GOOGLE_CLIENT_ID= ${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET= ${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     volumes:
       - ./user_management_service/src:/app/src
     depends_on:
